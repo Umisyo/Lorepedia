@@ -205,7 +205,57 @@ feat: ワールド一覧ページを追加
 | Worktree削除 | 作業が完全に完了し、マージ後はworktreeを削除する |
 | ブランチ-タスク紐付け | 1ブランチ = 1タスクの原則を守る |
 
-**Worktree操作コマンド:**
+### 実装フロー（必須手順）
+
+タスクを実装する際は、以下のフローを**必ず**完了させること：
+
+```
+1. Worktree作成 → 2. 実装 → 3. テスト・Lint → 4. Commit → 5. Push → 6. PR作成
+```
+
+#### Step 1: Worktree作成
+
+```bash
+# mainブランチから新しいworktreeを作成
+git worktree add ../Lorepedia-<branch-name> -b <branch-name>
+
+# worktreeディレクトリに移動して作業開始
+cd ../Lorepedia-<branch-name>
+```
+
+#### Step 2: 実装
+
+- 実装を行う
+- 適切な粒度でコミットを分割（1機能1コミットが目安）
+
+#### Step 3: テスト・Lint確認
+
+```bash
+npm run lint          # ESLintエラーがないことを確認
+npm run test:run      # テストが通ることを確認
+npm run build         # ビルドが成功することを確認（必要に応じて）
+```
+
+#### Step 4: Commit
+
+```bash
+git add .
+git commit -m "feat: 機能の説明"
+```
+
+#### Step 5: Push
+
+```bash
+git push -u origin <branch-name>
+```
+
+#### Step 6: PR作成
+
+```bash
+gh pr create --title "タイトル" --body "説明"
+```
+
+### Worktree操作コマンド
 
 ```bash
 # worktree作成（ブランチも同時に作成）
@@ -216,7 +266,21 @@ git worktree remove ../Lorepedia-<branch-name>
 
 # worktree一覧確認
 git worktree list
+
+# 不要なブランチのクリーンアップ
+/clean_gone
 ```
+
+### 実装完了の定義
+
+以下がすべて完了するまで、タスクは「完了」としない：
+
+- [ ] 実装が完了している
+- [ ] Lintエラーがない
+- [ ] テストが通る
+- [ ] コミットされている
+- [ ] リモートにPushされている
+- [ ] PRが作成されている（または直接マージの場合はマージ完了）
 
 ### タスク管理
 
