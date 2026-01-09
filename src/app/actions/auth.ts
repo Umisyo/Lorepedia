@@ -15,10 +15,15 @@ export async function signInWithEmail(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
-  const rawFormData: LoginFormData = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+  const email = formData.get('email')
+  const password = formData.get('password')
+
+  // 入力データの型チェック
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return { error: '入力データが不正です' }
   }
+
+  const rawFormData: LoginFormData = { email, password }
 
   // バリデーション
   const validatedFields = loginSchema.safeParse(rawFormData)

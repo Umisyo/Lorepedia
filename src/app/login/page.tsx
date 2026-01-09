@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,12 +20,28 @@ import { signInWithEmail, type AuthState } from '@/app/actions/auth'
 
 const initialState: AuthState = {}
 
+// URLエラーパラメータのメッセージマッピング
+const errorMessages: Record<string, string> = {
+  auth_failed: 'Googleログインに失敗しました。再度お試しください',
+  missing_code: '認証コードが見つかりません。再度お試しください',
+}
+
 export default function LoginPage() {
+  const searchParams = useSearchParams()
   const [state, formAction, isPending] = useActionState(
     signInWithEmail,
     initialState
   )
   const [showPassword, setShowPassword] = useState(false)
+
+  // URLのerrorパラメータを読み取る
+  const urlError = useMemo(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam && errorMessages[errorParam]) {
+      return errorMessages[errorParam]
+    }
+    return null
+  }, [searchParams])
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -37,6 +54,13 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* URLエラーパラメータの表示 */}
+          {urlError && (
+            <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+              {urlError}
+            </div>
+          )}
+
           {/* メール/パスワードフォーム */}
           <form action={formAction} className="space-y-4">
             {state.error && (

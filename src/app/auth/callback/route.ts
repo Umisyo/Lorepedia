@@ -8,14 +8,17 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   const origin = requestUrl.origin
 
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+  // codeがない場合はエラー
+  if (!code) {
+    return NextResponse.redirect(`${origin}/login?error=missing_code`)
+  }
 
-    if (error) {
-      // エラー時はログインページにリダイレクト
-      return NextResponse.redirect(`${origin}/login?error=auth_failed`)
-    }
+  const supabase = await createClient()
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error) {
+    // エラー時はログインページにリダイレクト
+    return NextResponse.redirect(`${origin}/login?error=auth_failed`)
   }
 
   // 認証成功後はダッシュボードへリダイレクト
