@@ -41,7 +41,8 @@ export function OAuthButton() {
       if (result?.error) {
         setError(result.error)
       }
-    } catch {
+    } catch (error) {
+      console.error('Google sign-in error:', error)
       setError('Googleログインに失敗しました')
     } finally {
       setIsLoading(false)
