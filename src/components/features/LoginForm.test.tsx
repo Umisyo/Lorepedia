@@ -5,8 +5,10 @@ import { LoginForm } from "./LoginForm"
 
 // モック
 const mockPush = vi.fn()
+const mockGet = vi.fn()
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: mockGet }),
 }))
 
 vi.mock("@/app/actions/auth", () => ({
@@ -22,6 +24,8 @@ const mockSignInWithGoogle = vi.mocked(signInWithGoogle)
 describe("LoginForm", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // デフォルトではredirectToパラメータはnull（/dashboardにリダイレクト）
+    mockGet.mockReturnValue(null)
   })
 
   describe("表示", () => {
@@ -117,6 +121,21 @@ describe("LoginForm", () => {
       await waitFor(() => {
         expect(mockSignInWithEmail).toHaveBeenCalledWith("test@example.com", "password123")
         expect(mockPush).toHaveBeenCalledWith("/dashboard")
+      })
+    })
+
+    it("redirectToパラメータがある場合はそのURLへ遷移", async () => {
+      mockSignInWithEmail.mockResolvedValue({ success: true })
+      mockGet.mockReturnValue("/world/123")
+      const user = userEvent.setup()
+      render(<LoginForm />)
+
+      await user.type(screen.getByPlaceholderText("メールアドレス"), "test@example.com")
+      await user.type(screen.getByPlaceholderText("パスワード"), "password123")
+      await user.click(screen.getByRole("button", { name: "ログイン" }))
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/world/123")
       })
     })
 

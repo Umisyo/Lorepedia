@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,8 @@ import { signInWithEmail, signInWithGoogle } from "@/app/actions/auth"
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard"
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -42,7 +44,7 @@ export function LoginForm() {
     const result = await signInWithEmail(data.email, data.password)
 
     if (result.success) {
-      router.push("/dashboard")
+      router.push(redirectTo)
     } else {
       setFormError(result.error || "ログインに失敗しました")
       setIsSubmitting(false)
@@ -116,6 +118,7 @@ export function LoginForm() {
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                       tabIndex={-1}
+                      aria-label={showPassword ? "パスワードを非表示" : "パスワードを表示"}
                     >
                       {showPassword ? (
                         <EyeOff className="size-4" />
