@@ -128,7 +128,7 @@ export function MyComponent({ title, onSubmit, children }: Props) {
 - [ ] `strict: true` を維持
 - [ ] `any` 型の使用禁止（`unknown` + 型ガードを使用）
 - [ ] 外部APIレスポンスは Zod でバリデーション
-- [ ] Supabase型は自動生成を使用 (`npm run supabase:types`)
+- [ ] Supabase型は自動生成を使用 (`pnpm supabase:types`)
 
 ### テスト
 
@@ -239,9 +239,9 @@ UIコンポーネントやページを実装した場合は、`/rams` スキル�
 #### Step 3: テスト・Lint確認
 
 ```bash
-npm run lint          # ESLintエラーがないことを確認
-npm run test:run      # テストが通ることを確認
-npm run build         # ビルドが成功することを確認（必要に応じて）
+pnpm lint          # ESLintエラーがないことを確認
+pnpm test:run      # テストが通ることを確認
+pnpm build         # ビルドが成功することを確認（必要に応じて）
 ```
 
 #### Step 4: Commit
@@ -276,7 +276,7 @@ PR作成後、以下のサイクルを**最大3回**繰り返す：
 
 **3. 修正**
 - 指摘された箇所を修正
-- `npm run lint && npm run test:run` で確認
+- `pnpm lint && pnpm test:run` で確認
 - 修正をコミット・プッシュ
 - 1に戻る
 
@@ -367,13 +367,13 @@ git worktree list
 ## 開発コマンド
 
 ```bash
-npm run dev          # 開発サーバー起動
-npm run build        # 本番ビルド
-npm run lint         # ESLintチェック
-npm run test         # テスト実行（watchモード）
-npm run test:run     # テスト実行（単発）
-npm run storybook    # Storybook起動
-npm run supabase:types  # Supabase型生成
+pnpm dev          # 開発サーバー起動
+pnpm build        # 本番ビルド
+pnpm lint         # ESLintチェック
+pnpm test         # テスト実行（watchモード）
+pnpm test:run     # テスト実行（単発）
+pnpm storybook    # Storybook起動
+pnpm supabase:types  # Supabase型生成
 ```
 
 ---
