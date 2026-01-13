@@ -210,7 +210,7 @@ feat: ワールド一覧ページを追加
 タスクを実装する際は、以下のフローを**必ず**完了させること：
 
 ```
-1. Worktree作成 → 2. 実装 → 3. テスト・Lint → 4. Commit → 5. Push → 6. PR作成 → 7. セルフレビュー・修正サイクル
+1. Worktree作成 → 2. 実装 → 3. Commit → 4. Push → 5. PR作成 → 6. セルフレビュー・修正サイクル
 ```
 
 #### Step 1: Worktree作成
@@ -236,34 +236,26 @@ UIコンポーネントやページを実装した場合は、`/rams` スキル�
 - ビジュアルデザインの確認
 - 指摘事項があれば修正してから次のステップへ進む
 
-#### Step 3: テスト・Lint確認
-
-```bash
-pnpm lint          # ESLintエラーがないことを確認
-pnpm test:run      # テストが通ることを確認
-pnpm build         # ビルドが成功することを確認（必要に応じて）
-```
-
-#### Step 4: Commit
+#### Step 3: Commit
 
 ```bash
 git add .
 git commit -m "feat: 機能の説明"
 ```
 
-#### Step 5: Push
+#### Step 4: Push
 
 ```bash
 git push -u origin <branch-name>
 ```
 
-#### Step 6: PR作成
+#### Step 5: PR作成
 
 ```bash
 gh pr create --title "タイトル" --body "説明"
 ```
 
-#### Step 7: セルフレビュー・修正サイクル
+#### Step 6: セルフレビュー・修正サイクル
 
 PR作成後、以下のサイクルを**最大3回**繰り返す：
 
@@ -276,7 +268,6 @@ PR作成後、以下のサイクルを**最大3回**繰り返す：
 
 **3. 修正**
 - 指摘された箇所を修正
-- `pnpm lint && pnpm test:run` で確認
 - 修正をコミット・プッシュ
 - 1に戻る
 
@@ -303,6 +294,9 @@ git worktree list
 ### 実装完了の定義
 
 以下がすべて完了するまで、タスクは「完了」としない：
+
+> **Note:** Lint・テストはhuskyのpre-commit/pre-pushフックで自動実行されます。
+> コミットまたはプッシュ時にエラーが発生した場合は、修正してから再実行してください。
 
 - [ ] 実装が完了している
 - [ ] UI実装の場合: `/rams` でUIレビューを実行し、指摘を解消済み
