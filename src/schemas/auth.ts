@@ -23,6 +23,20 @@ export const signupSchema = z
 
 export type SignupFormData = z.infer<typeof signupSchema>
 
+// ログインフォームのバリデーションスキーマ
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, "メールアドレスを入力してください")
+    .email("有効なメールアドレスを入力してください"),
+  password: z
+    .string()
+    .min(1, "パスワードを入力してください")
+    .min(8, "パスワードは8文字以上で入力してください"),
+})
+
+export type LoginFormData = z.infer<typeof loginSchema>
+
 // パスワード強度の判定
 export type PasswordStrength = "weak" | "medium" | "strong"
 
