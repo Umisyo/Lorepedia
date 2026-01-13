@@ -47,16 +47,27 @@ git worktree list
 git worktree add ../Lorepedia-<branch-name> -b <branch-name> main
 ```
 
-### 3. 依存関係のインストール
+### 3. 環境変数ファイルのシンボリックリンク作成
+
+worktree間で`.env`を共有するため、メインリポジトリの`.env`へシンボリックリンクを作成:
+
+```bash
+cd ../Lorepedia-<branch-name>
+
+# メインリポジトリ（最初のworktree）のパスを動的に取得してリンク
+MAIN_REPO=$(git worktree list --porcelain | grep "^worktree " | head -1 | sed 's/worktree //')
+ln -s "$MAIN_REPO/.env" .env
+```
+
+### 4. 依存関係のインストール
 
 worktreeディレクトリでは`node_modules`が共有されないため、必要に応じてインストール:
 
 ```bash
-cd ../Lorepedia-<branch-name>
-npm install
+pnpm install
 ```
 
-### 4. 作業開始の案内
+### 5. 作業開始の案内
 
 worktree作成後、以下を案内する:
 - 作業ディレクトリのパス
@@ -77,7 +88,8 @@ User: /worktree-create feature/add-world-list
 Assistant:
 1. git status で現在の状態を確認
 2. git worktree add ../Lorepedia-feature-add-world-list -b feature/add-world-list main を実行
-3. npm install を実行
-4. 作業ディレクトリ: /path/to/Lorepedia-feature-add-world-list
+3. ln -s でメインリポジトリの.envへシンボリックリンクを作成
+4. pnpm install を実行
+5. 作業ディレクトリ: /path/to/Lorepedia-feature-add-world-list
    次のステップ: 実装を開始してください
 ```
