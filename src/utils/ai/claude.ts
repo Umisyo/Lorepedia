@@ -5,7 +5,7 @@ export const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-export async function generateText(prompt: string): Promise<string> {
+export async function generateText(_prompt: string): Promise<string> {
   // TODO: Implement text generation
   throw new Error('Not implemented')
 }

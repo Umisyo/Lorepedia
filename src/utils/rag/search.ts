@@ -7,8 +7,8 @@ export interface SearchResult {
 }
 
 export async function searchSimilar(
-  query: string,
-  limit?: number
+  _query: string,
+  _limit?: number
 ): Promise<SearchResult[]> {
   // TODO: Implement vector search
   throw new Error('Not implemented')

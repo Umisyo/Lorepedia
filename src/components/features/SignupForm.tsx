@@ -39,6 +39,8 @@ export function SignupForm() {
     },
   })
 
+  // パスワード強度インジケーターのためにリアルタイムで値を監視
+  // eslint-disable-next-line react-hooks/incompatible-library
   const password = form.watch("password")
 
   async function onSubmit(data: SignupFormData) {
