@@ -1,46 +1,54 @@
 ---
 name: lorepedia-knowledge
-description: Lorepediaプロジェクト固有の問題・解決策・技術的知見を記録・検索するスキル。デバッグで発見したインサイト、実装上のハマりポイント、プロジェクト固有の設定などをExocortexに保存し、将来の同様の問題解決を効率化する。
+description: バグ修正・エラー解消・技術的知見を自動記録するスキル。デバッグで発見したインサイト、実装上のハマりポイント、設定の回避策などをExocortexに保存し、将来の同様の問題解決を効率化する。プロジェクト固有でなくても、汎用的な技術知見も記録対象。
 ---
 
-# Lorepedia Knowledge
+# Knowledge Auto-Record
 
-Lorepediaプロジェクト固有のナレッジをExocortexに記録・検索するスキル。
+バグ修正・エラー解消・技術的知見をExocortexに自動記録するスキル。
 
 ## 自動トリガー条件
 
-以下の状況で自動的にこのスキルを使用する：
+**以下の状況では、ユーザーへの確認なしに自動的に記録する：**
 
-### 記録すべき時
-- デバッグで原因を特定した時
-- プロジェクト固有の設定や回避策を発見した時
-- 複雑な問題を解決した時
+### 必ず記録する（自動実行）
+- バグを修正した時
+- エラーを解消した時
+- ビルドエラー・型エラーを解決した時
+- 設定ミスを発見・修正した時
+- 原因不明だった問題の原因を特定した時
+- 試行錯誤の末に解決策を見つけた時
+
+### 記録を検討する
 - 「これは覚えておくべき」と感じるインサイトを得た時
 - 同じミスを繰り返したくない失敗を経験した時
+- 複雑な実装パターンを発見した時
 
 ### 検索すべき時
 - 以前見たことがありそうなエラーに遭遇した時
-- プロジェクト固有の設定方法を確認したい時
 - 過去に解決した類似の問題に取り組む時
+- 設定方法を確認したい時
 
 ## 記録手順
 
-### 1. 既存ナレッジの確認
+### 1. 既存ナレッジの確認（省略可）
 ```
-exo_recall_memories(query="問題の概要", context_filter="lorepedia")
+exo_recall_memories(query="問題の概要")
 ```
 
 ### 2. ナレッジの保存
 ```
 exo_store_memory(
   content="問題の詳細、原因、解決策をMarkdownで記述",
-  context_name="lorepedia",
+  context_name="lorepedia",  # 現在のプロジェクト名
   tags=["関連タグ", "技術名", "問題カテゴリ"],
   memory_type="適切なタイプ",
   is_painful=true/false,  # 苦労した問題の場合true
   time_cost_hours=N  # 解決にかかった時間（任意）
 )
 ```
+
+**注意**: バグ修正・エラー解消時は、確認なしで即座に記録する。
 
 ### 3. 関連ナレッジのリンク
 `suggested_links`が返された場合、類似度が高いものをリンク:
@@ -60,36 +68,35 @@ exo_link_memories(source_id, target_id, relation_type, reason)
 
 ## タグ付けガイドライン
 
-### 技術スタック関連
-- `nextjs`, `typescript`, `supabase`, `tailwind`, `shadcn`
-- `react-flow`, `zod`, `react-hook-form`
-- `claude-api`, `openai-api`, `pgvector`
+### 問題カテゴリ（必須）
+- `bugfix`, `error-fix`, `config-fix`
+- `type-error`, `runtime-error`, `build-error`, `lint-error`
+- `performance`, `security`
 
-### 問題カテゴリ
-- `bugfix`, `performance`, `security`, `config`
-- `type-error`, `runtime-error`, `build-error`
-- `database`, `api`, `ui`, `auth`
+### 技術スタック（該当するもの）
+- **フレームワーク**: `nextjs`, `react`, `vue`, `node`
+- **言語**: `typescript`, `javascript`, `python`
+- **DB/Backend**: `supabase`, `postgresql`, `prisma`
+- **スタイル**: `tailwind`, `css`, `shadcn`
+- **ツール**: `eslint`, `vite`, `webpack`
+- **AI**: `claude-api`, `openai-api`, `embedding`
 
-### 機能領域
-- `world-management`, `character`, `lore`
-- `ai-generation`, `embedding`, `search`
+### 問題領域
+- `database`, `api`, `ui`, `auth`, `routing`
+- `async`, `state-management`, `validation`
 
 ## 検索手順
 
 ### シンプルな検索
 ```
-exo_recall_memories(
-  query="検索キーワード",
-  context_filter="lorepedia"
-)
+exo_recall_memories(query="検索キーワード")
 ```
 
 ### フィルター付き検索
 ```
 exo_recall_memories(
   query="検索キーワード",
-  context_filter="lorepedia",
-  tag_filter=["bugfix", "supabase"],
+  tag_filter=["bugfix", "typescript"],
   type_filter="success"
 )
 ```
@@ -170,35 +177,59 @@ exo_sleep()
 
 ## 使用例
 
-### 例1: Supabaseの型エラーを解決した時
+### 例1: 型エラーを解決した時（自動記録）
 ```
 exo_store_memory(
   content="""
 ## 問題
-Supabase Clientの型定義で `Tables` 型が見つからないエラー
+TypeScriptで `Property 'X' does not exist on type 'Y'` エラー
 
 ## 原因
-`npm run supabase:types` 実行後に型定義ファイルの再生成が必要
+型定義が古く、実際のオブジェクト構造と不一致
 
 ## 解決策
-1. `npm run supabase:types` を実行
-2. VSCodeをリロード（Cmd+Shift+P → Reload Window）
+1. 型定義ファイルを再生成
+2. エディタをリロード
 
 ## 再発防止
-DBスキーマ変更後は必ず型を再生成する
+スキーマ変更後は必ず型を再生成する
 """,
   context_name="lorepedia",
-  tags=["supabase", "typescript", "type-error", "database"],
-  memory_type="success",
-  is_painful=false
+  tags=["type-error", "typescript", "bugfix"],
+  memory_type="success"
 )
 ```
 
-### 例2: 過去の類似問題を検索
+### 例2: ビルドエラーを解決した時（自動記録）
+```
+exo_store_memory(
+  content="""
+## 問題
+`Module not found: Can't resolve 'xxx'`
+
+## 原因
+依存パッケージのバージョン不整合
+
+## 解決策
+node_modules削除後、再インストール
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## 再発防止
+パッケージ追加時はバージョン互換性を確認
+""",
+  context_name="lorepedia",
+  tags=["build-error", "npm", "bugfix"],
+  memory_type="success"
+)
+```
+
+### 例3: 過去の類似問題を検索
 ```
 exo_recall_memories(
-  query="Supabase 型エラー",
-  context_filter="lorepedia",
-  tag_filter=["supabase", "type-error"]
+  query="build error module not found",
+  tag_filter=["build-error"]
 )
 ```
