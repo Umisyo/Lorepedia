@@ -53,7 +53,10 @@ worktree間で`.env`を共有するため、メインリポジトリの`.env`へ
 
 ```bash
 cd ../Lorepedia-<branch-name>
-ln -s /Users/souta.kusunoki/.ghr/github.com/Umisyo/Lorepedia/.env .env
+
+# メインリポジトリ（最初のworktree）のパスを動的に取得してリンク
+MAIN_REPO=$(git worktree list --porcelain | grep "^worktree " | head -1 | sed 's/worktree //')
+ln -s "$MAIN_REPO/.env" .env
 ```
 
 ### 4. 依存関係のインストール
