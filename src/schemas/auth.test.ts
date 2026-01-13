@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { getPasswordStrength, signupSchema } from "./auth"
+import { getPasswordStrength, signupSchema, loginSchema } from "./auth"
 
 describe("getPasswordStrength", () => {
   describe("弱いパスワード", () => {
@@ -147,6 +147,90 @@ describe("signupSchema", () => {
 
       const result = signupSchema.safeParse(data)
       expect(result.success).toBe(false)
+    })
+  })
+})
+
+describe("loginSchema", () => {
+  describe("有効なデータ", () => {
+    it("すべての条件を満たすデータは検証を通過する", () => {
+      const validData = {
+        email: "test@example.com",
+        password: "password123",
+      }
+
+      const result = loginSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+    })
+  })
+
+  describe("メールアドレスのバリデーション", () => {
+    it("空のメールアドレスはエラー", () => {
+      const data = {
+        email: "",
+        password: "password123",
+      }
+
+      const result = loginSchema.safeParse(data)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe("メールアドレスを入力してください")
+      }
+    })
+
+    it("無効なメール形式はエラー", () => {
+      const data = {
+        email: "invalid-email",
+        password: "password123",
+      }
+
+      const result = loginSchema.safeParse(data)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe("有効なメールアドレスを入力してください")
+      }
+    })
+  })
+
+  describe("パスワードのバリデーション", () => {
+    it("空のパスワードはエラー", () => {
+      const data = {
+        email: "test@example.com",
+        password: "",
+      }
+
+      const result = loginSchema.safeParse(data)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe("パスワードを入力してください")
+      }
+    })
+
+    it("8文字未満のパスワードはエラー", () => {
+      const data = {
+        email: "test@example.com",
+        password: "short",
+      }
+
+      const result = loginSchema.safeParse(data)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe("パスワードは8文字以上で入力してください")
+      }
+    })
+
+    it("境界値: 7文字はエラー、8文字は通過", () => {
+      const data7 = {
+        email: "test@example.com",
+        password: "1234567",
+      }
+      const data8 = {
+        email: "test@example.com",
+        password: "12345678",
+      }
+
+      expect(loginSchema.safeParse(data7).success).toBe(false)
+      expect(loginSchema.safeParse(data8).success).toBe(true)
     })
   })
 })
