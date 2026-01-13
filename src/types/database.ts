@@ -11,20 +11,10 @@ export type Json =
 
 export interface Database {
   public: {
-    Tables: {
-      // Tables will be generated here
-    }
-    Views: {
-      // Views will be generated here
-    }
-    Functions: {
-      // Functions will be generated here
-    }
-    Enums: {
-      // Enums will be generated here
-    }
-    CompositeTypes: {
-      // Composite types will be generated here
-    }
+    Tables: Record<string, never>
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }

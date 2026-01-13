@@ -1,9 +1,11 @@
-import { http, HttpResponse } from 'msw'
+import type { RequestHandler } from "msw"
 
-// Define your request handlers here
-export const handlers = [
-  // Example handler:
-  // http.get('/api/example', () => {
-  //   return HttpResponse.json({ message: 'Hello, world!' })
-  // }),
-]
+// MSWハンドラーを定義する
+// 例:
+// import { http, HttpResponse } from 'msw'
+// export const handlers: RequestHandler[] = [
+//   http.get('/api/example', () => {
+//     return HttpResponse.json({ message: 'Hello, world!' })
+//   }),
+// ]
+export const handlers: RequestHandler[] = []

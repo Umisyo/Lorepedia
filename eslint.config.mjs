@@ -8,6 +8,21 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // Storybookファイル用のlint設定
+  ...storybook.configs["flat/recommended"],
+  // カスタムルール
+  {
+    rules: {
+      // アンダースコアプレフィックス付きの未使用変数を許可
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
