@@ -4,15 +4,11 @@ import { useRouter } from "next/navigation"
 import { useCallback } from "react"
 
 import { Header } from "@/components/features/Header"
+import type { HeaderUser } from "@/types/header"
 import { createClient } from "@/utils/supabase/client"
 
-type User = {
-  email: string
-  avatarUrl?: string | null
-}
-
 type Props = {
-  user: User | null
+  user: HeaderUser | null
 }
 
 // Server Componentから受け取ったユーザー情報を元にHeaderをレンダリング

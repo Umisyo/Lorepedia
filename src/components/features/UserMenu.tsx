@@ -12,12 +12,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { HeaderUser } from "@/types/header"
 
 type Props = {
-  user: {
-    email: string
-    avatarUrl?: string | null
-  }
+  user: HeaderUser
   onLogout: () => void
 }
 

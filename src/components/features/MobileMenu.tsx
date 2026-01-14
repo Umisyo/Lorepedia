@@ -14,20 +14,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-
-type NavItem = {
-  href: string
-  label: string
-}
-
-type User = {
-  email: string
-  avatarUrl?: string | null
-}
+import type { HeaderUser, NavItem } from "@/types/header"
 
 type Props = {
   navItems: NavItem[]
-  user: User | null
+  user: HeaderUser | null
   onLogout: () => void
 }
 
@@ -70,11 +61,11 @@ export function MobileMenu({ navItems, user, onLogout }: Props) {
             </div>
           ) : (
             <div className="flex flex-col gap-2 pt-4 border-t">
-              <Button asChild variant="outline" onClick={closeMenu}>
-                <Link href="/login">ログイン</Link>
+              <Button asChild variant="outline">
+                <Link href="/login" onClick={closeMenu}>ログイン</Link>
               </Button>
-              <Button asChild onClick={closeMenu}>
-                <Link href="/signup">サインアップ</Link>
+              <Button asChild>
+                <Link href="/signup" onClick={closeMenu}>サインアップ</Link>
               </Button>
             </div>
           )}

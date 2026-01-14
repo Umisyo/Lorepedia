@@ -4,19 +4,10 @@ import { MobileMenu } from "@/components/features/MobileMenu"
 import { ThemeToggle } from "@/components/features/ThemeToggle"
 import { UserMenu } from "@/components/features/UserMenu"
 import { Button } from "@/components/ui/button"
-
-type NavItem = {
-  href: string
-  label: string
-}
-
-type User = {
-  email: string
-  avatarUrl?: string | null
-}
+import type { HeaderUser, NavItem } from "@/types/header"
 
 type Props = {
-  user: User | null
+  user: HeaderUser | null
   onLogout: () => void
 }
 
