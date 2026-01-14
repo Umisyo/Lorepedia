@@ -34,12 +34,14 @@ export default async function RootLayout({
   } = await supabase.auth.getUser()
 
   // Headerに渡すユーザー情報を整形
-  const headerUser = user
-    ? {
-        email: user.email ?? "",
-        avatarUrl: user.user_metadata?.avatar_url ?? null,
-      }
-    : null
+  // emailが存在しない場合は未認証扱いとする
+  const headerUser =
+    user && user.email
+      ? {
+          email: user.email,
+          avatarUrl: user.user_metadata?.avatar_url ?? null,
+        }
+      : null
 
   return (
     <html lang="ja" suppressHydrationWarning>

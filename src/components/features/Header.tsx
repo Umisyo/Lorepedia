@@ -24,7 +24,7 @@ const getNavItems = (isLoggedIn: boolean): NavItem[] => {
 // 全ページ共通のヘッダーコンポーネント
 // ログイン状態に応じて表示内容が切り替わる
 export function Header({ user, onLogout }: Props) {
-  const navItems = getNavItems(!!user)
+  const navItems = getNavItems(user !== null)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
