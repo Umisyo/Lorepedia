@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { getDateRangeEndDate, calculatePagination } from "./loreCard"
+import { getDateRangeEndDate, calculatePagination } from "./pagination"
 
 describe("getDateRangeEndDate", () => {
   it("翌日の日付文字列を返す", () => {

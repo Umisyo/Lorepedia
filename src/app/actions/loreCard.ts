@@ -14,6 +14,7 @@ import type {
   GetLoreCardsOptions,
   PaginatedLoreCards,
 } from "@/types/filter"
+import { getDateRangeEndDate, calculatePagination } from "@/utils/pagination"
 
 // アクション結果の型
 export type LoreCardActionResult<T = void> = {
@@ -55,26 +56,6 @@ async function getCardIdsByTags(
   // 重複を除去
   const cardIds = [...new Set(cardTagData.map((ct) => ct.card_id))]
   return { success: true, cardIds }
-}
-
-// 日付範囲のフィルタ終了日を計算（翌日の0時を返す）
-// テスト用にexport
-export function getDateRangeEndDate(dateTo: string): string {
-  const endDate = new Date(dateTo)
-  endDate.setDate(endDate.getDate() + 1)
-  return endDate.toISOString().split("T")[0]
-}
-
-// ページネーション情報を計算
-// テスト用にexport
-export function calculatePagination(
-  total: number,
-  page: number,
-  limit: number
-): { totalPages: number; offset: number } {
-  const totalPages = Math.ceil(total / limit)
-  const offset = (page - 1) * limit
-  return { totalPages, offset }
 }
 
 // カード一覧取得
