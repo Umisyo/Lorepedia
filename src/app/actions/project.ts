@@ -10,6 +10,7 @@ export type CreateProjectResult = {
   success: boolean
   projectId?: string
   error?: string
+  warnings?: string[]
 }
 
 export async function createProject(
@@ -63,6 +64,7 @@ export async function createProject(
     }
 
     // 4. タグ作成（ある場合）
+    const warnings: string[] = []
     if (tags.length > 0) {
       const tagRecords = tags.map((tag) => ({
         project_id: project.id,
@@ -76,11 +78,18 @@ export async function createProject(
       if (tagError) {
         console.error("タグ作成エラー:", tagError)
         // タグ作成に失敗してもプロジェクト作成は成功とする
-        // ユーザーは後からタグを追加できる
+        // ユーザーは後からタグを追加できるが、警告を返す
+        warnings.push(
+          "タグの作成に一部失敗しました。後から追加することができます。"
+        )
       }
     }
 
-    return { success: true, projectId: project.id }
+    return {
+      success: true,
+      projectId: project.id,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    }
   } catch (error) {
     console.error("予期しないエラー:", error)
     return {

@@ -37,6 +37,44 @@ function extractTags(
   return cardTags.map((ct) => ct.tags).filter(isTag)
 }
 
+// タグIDからフィルタ対象のカードIDを取得
+async function getCardIdsByTags(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tagIds: string[]
+): Promise<{ success: true; cardIds: string[] } | { success: false; error: string }> {
+  const { data: cardTagData, error } = await supabase
+    .from("card_tags")
+    .select("card_id")
+    .in("tag_id", tagIds)
+
+  if (error) {
+    console.error("Failed to fetch card tags:", error)
+    return { success: false, error: "カードの取得に失敗しました" }
+  }
+
+  // 重複を除去
+  const cardIds = [...new Set(cardTagData.map((ct) => ct.card_id))]
+  return { success: true, cardIds }
+}
+
+// 日付範囲のフィルタ終了日を計算（翌日の0時を返す）
+function getDateRangeEndDate(dateTo: string): string {
+  const endDate = new Date(dateTo)
+  endDate.setDate(endDate.getDate() + 1)
+  return endDate.toISOString().split("T")[0]
+}
+
+// ページネーション情報を計算
+function calculatePagination(
+  total: number,
+  page: number,
+  limit: number
+): { totalPages: number; offset: number } {
+  const totalPages = Math.ceil(total / limit)
+  const offset = (page - 1) * limit
+  return { totalPages, offset }
+}
+
 // カード一覧取得
 export async function getLoreCards(
   projectId: string
@@ -107,31 +145,19 @@ export async function getLoreCardsPaginated(
   // タグフィルタがある場合、対象のカードIDを先に取得
   let filteredCardIds: string[] | null = null
   if (tagIds && tagIds.length > 0) {
-    const { data: cardTagData, error: cardTagError } = await supabase
-      .from("card_tags")
-      .select("card_id")
-      .in("tag_id", tagIds)
-
-    if (cardTagError) {
-      console.error("Failed to fetch card tags:", cardTagError)
-      return { success: false, error: "カードの取得に失敗しました" }
+    const tagFilterResult = await getCardIdsByTags(supabase, tagIds)
+    if (!tagFilterResult.success) {
+      return { success: false, error: tagFilterResult.error }
     }
-
-    // 重複を除去
-    filteredCardIds = [...new Set(cardTagData.map((ct) => ct.card_id))]
 
     // タグに該当するカードがない場合は空の結果を返す
-    if (filteredCardIds.length === 0) {
+    if (tagFilterResult.cardIds.length === 0) {
       return {
         success: true,
-        data: {
-          cards: [],
-          total: 0,
-          page,
-          totalPages: 0,
-        },
+        data: { cards: [], total: 0, page, totalPages: 0 },
       }
     }
+    filteredCardIds = tagFilterResult.cardIds
   }
 
   // ベースクエリを構築
@@ -148,38 +174,27 @@ export async function getLoreCardsPaginated(
     )
     .eq("project_id", projectId)
 
-  // タグフィルタ適用
+  // フィルタを適用
   if (filteredCardIds) {
     query = query.in("id", filteredCardIds)
   }
-
-  // キーワード検索
   if (search && search.trim()) {
     const searchTerm = `%${search.trim()}%`
     query = query.or(`title.ilike.${searchTerm},content.ilike.${searchTerm}`)
   }
-
-  // 作成者フィルタ
   if (authorIds && authorIds.length > 0) {
     query = query.in("author_id", authorIds)
   }
-
-  // 期間フィルタ
   if (dateFrom) {
     query = query.gte("created_at", dateFrom)
   }
   if (dateTo) {
-    // dateTo の日付の終わりまでを含めるため、翌日を指定
-    const endDate = new Date(dateTo)
-    endDate.setDate(endDate.getDate() + 1)
-    query = query.lt("created_at", endDate.toISOString().split("T")[0])
+    query = query.lt("created_at", getDateRangeEndDate(dateTo))
   }
 
-  // ソート
+  // ソートとページネーションを適用
   query = query.order(sortBy, { ascending: sortOrder === "asc" })
-
-  // ページネーション
-  const offset = (page - 1) * limit
+  const { offset } = calculatePagination(0, page, limit)
   query = query.range(offset, offset + limit - 1)
 
   const { data: cards, error, count } = await query
@@ -189,23 +204,18 @@ export async function getLoreCardsPaginated(
     return { success: false, error: "カードの取得に失敗しました" }
   }
 
-  // タグをフラット化
+  // 結果を整形して返す
   const cardsWithTags: LoreCardWithTags[] = (cards ?? []).map((card) => ({
     ...card,
     tags: extractTags(card.card_tags),
   }))
 
   const total = count ?? 0
-  const totalPages = Math.ceil(total / limit)
+  const { totalPages } = calculatePagination(total, page, limit)
 
   return {
     success: true,
-    data: {
-      cards: cardsWithTags,
-      total,
-      page,
-      totalPages,
-    },
+    data: { cards: cardsWithTags, total, page, totalPages },
   }
 }
 
