@@ -8,6 +8,7 @@ import {
   isAuthor,
   type LoreCardWithTags,
   type LoreCardWithRelations,
+  type Tag,
 } from "@/types/loreCard"
 
 // アクション結果の型
@@ -15,6 +16,21 @@ export type LoreCardActionResult<T = void> = {
   success: boolean
   error?: string
   data?: T
+}
+
+// プロジェクト情報の型
+type ProjectInfo = {
+  id: string
+  name: string
+  description: string | null
+}
+
+// card_tagsからTagを抽出するユーティリティ関数
+function extractTags(
+  cardTags: Array<{ tags: unknown }> | null | undefined
+): Tag[] {
+  if (!cardTags) return []
+  return cardTags.map((ct) => ct.tags).filter(isTag)
 }
 
 // カード一覧取得
@@ -52,10 +68,7 @@ export async function getLoreCards(
   // タグをフラット化
   const cardsWithTags: LoreCardWithTags[] = cards.map((card) => ({
     ...card,
-    tags:
-      card.card_tags
-        ?.map((ct: { tags: unknown }) => ct.tags)
-        .filter(isTag) ?? [],
+    tags: extractTags(card.card_tags),
   }))
 
   return { success: true, data: cardsWithTags }
@@ -105,10 +118,7 @@ export async function getLoreCard(
   // タグをフラット化
   const cardWithRelations: LoreCardWithRelations = {
     ...card,
-    tags:
-      card.card_tags
-        ?.map((ct: { tags: unknown }) => ct.tags)
-        .filter(isTag) ?? [],
+    tags: extractTags(card.card_tags),
     author: isAuthor(card.profiles) ? card.profiles : null,
   }
 
@@ -161,7 +171,9 @@ export async function createLoreCard(
 }
 
 // プロジェクト情報取得（ヘッダー表示用）
-export async function getProject(projectId: string) {
+export async function getProject(
+  projectId: string
+): Promise<ProjectInfo | null> {
   const supabase = await createClient()
 
   const { data: project, error } = await supabase
