@@ -22,6 +22,7 @@ const createMockProject = (
   owner_id: "user-1",
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-10T00:00:00Z",
+  is_public_editable: false,
   memberCount: 5,
   myRole: "owner",
   ...overrides,
