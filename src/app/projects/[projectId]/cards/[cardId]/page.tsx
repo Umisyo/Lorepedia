@@ -28,8 +28,8 @@ export default async function CardDetailPage({ params }: Props) {
     redirect("/dashboard")
   }
 
-  // カード詳細取得
-  const result = await getLoreCard(cardId)
+  // カード詳細取得（プロジェクトIDでスコープ）
+  const result = await getLoreCard(projectId, cardId)
   if (!result.success || !result.data) {
     notFound()
   }

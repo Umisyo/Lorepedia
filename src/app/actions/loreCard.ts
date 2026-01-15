@@ -76,6 +76,7 @@ export async function getLoreCards(
 
 // カード詳細取得
 export async function getLoreCard(
+  projectId: string,
   cardId: string
 ): Promise<LoreCardActionResult<LoreCardWithRelations>> {
   const supabase = await createClient()
@@ -87,7 +88,7 @@ export async function getLoreCard(
     return { success: false, error: "ログインが必要です" }
   }
 
-  // カード、タグ、作成者を取得
+  // カード、タグ、作成者を取得（プロジェクトIDでスコープ）
   const { data: card, error } = await supabase
     .from("lore_cards")
     .select(
@@ -104,6 +105,7 @@ export async function getLoreCard(
     `
     )
     .eq("id", cardId)
+    .eq("project_id", projectId)
     .single()
 
   if (error) {
