@@ -66,10 +66,14 @@ async function getProjects(userId: string): Promise<GetProjectsResult> {
     typedMemberships.filter(hasValidProject).map(async (membership) => {
       const project = membership.project
 
-      const { count } = await supabase
+      const { count, error: countError } = await supabase
         .from("project_members")
         .select("*", { count: "exact", head: true })
         .eq("project_id", project.id)
+
+      if (countError) {
+        console.error("Failed to fetch member count:", countError)
+      }
 
       return {
         ...project,
