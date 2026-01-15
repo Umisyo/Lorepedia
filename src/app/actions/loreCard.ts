@@ -58,14 +58,16 @@ async function getCardIdsByTags(
 }
 
 // 日付範囲のフィルタ終了日を計算（翌日の0時を返す）
-function getDateRangeEndDate(dateTo: string): string {
+// テスト用にexport
+export function getDateRangeEndDate(dateTo: string): string {
   const endDate = new Date(dateTo)
   endDate.setDate(endDate.getDate() + 1)
   return endDate.toISOString().split("T")[0]
 }
 
 // ページネーション情報を計算
-function calculatePagination(
+// テスト用にexport
+export function calculatePagination(
   total: number,
   page: number,
   limit: number
