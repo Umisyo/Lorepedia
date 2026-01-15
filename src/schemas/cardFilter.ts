@@ -1,0 +1,83 @@
+import { z } from "zod"
+
+// ソート対象カラムのスキーマ
+export const sortBySchema = z.enum(["created_at", "updated_at", "title"])
+
+// ソート順のスキーマ
+export const sortOrderSchema = z.enum(["asc", "desc"])
+
+// 表示モードのスキーマ
+export const viewModeSchema = z.enum(["grid", "list"])
+
+// フィルタパラメータのスキーマ
+export const cardFilterSchema = z.object({
+  search: z.string().optional().default(""),
+  tags: z.array(z.string().uuid()).optional().default([]),
+  authors: z.array(z.string().uuid()).optional().default([]),
+  dateFrom: z.string().optional().default(""),
+  dateTo: z.string().optional().default(""),
+  sortBy: sortBySchema.optional().default("updated_at"),
+  sortOrder: sortOrderSchema.optional().default("desc"),
+  viewMode: viewModeSchema.optional().default("grid"),
+  page: z.number().int().positive().optional().default(1),
+})
+
+export type CardFilterParams = z.infer<typeof cardFilterSchema>
+
+// URLSearchParamsからフィルタパラメータを抽出するヘルパー
+export function parseFilterParams(
+  searchParams: URLSearchParams
+): CardFilterParams {
+  return {
+    search: searchParams.get("q") ?? "",
+    tags: searchParams.getAll("tag").filter((id) => id.length > 0),
+    authors: searchParams.getAll("author").filter((id) => id.length > 0),
+    dateFrom: searchParams.get("from") ?? "",
+    dateTo: searchParams.get("to") ?? "",
+    sortBy: sortBySchema.catch("updated_at").parse(searchParams.get("sort")),
+    sortOrder: sortOrderSchema.catch("desc").parse(searchParams.get("order")),
+    viewMode: viewModeSchema.catch("grid").parse(searchParams.get("view")),
+    page: Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1),
+  }
+}
+
+// フィルタパラメータをURLSearchParamsに変換するヘルパー
+export function buildFilterParams(
+  filters: Partial<CardFilterParams>
+): URLSearchParams {
+  const params = new URLSearchParams()
+
+  if (filters.search) {
+    params.set("q", filters.search)
+  }
+  if (filters.tags && filters.tags.length > 0) {
+    for (const tag of filters.tags) {
+      params.append("tag", tag)
+    }
+  }
+  if (filters.authors && filters.authors.length > 0) {
+    for (const author of filters.authors) {
+      params.append("author", author)
+    }
+  }
+  if (filters.dateFrom) {
+    params.set("from", filters.dateFrom)
+  }
+  if (filters.dateTo) {
+    params.set("to", filters.dateTo)
+  }
+  if (filters.sortBy && filters.sortBy !== "updated_at") {
+    params.set("sort", filters.sortBy)
+  }
+  if (filters.sortOrder && filters.sortOrder !== "desc") {
+    params.set("order", filters.sortOrder)
+  }
+  if (filters.viewMode && filters.viewMode !== "grid") {
+    params.set("view", filters.viewMode)
+  }
+  if (filters.page && filters.page > 1) {
+    params.set("page", filters.page.toString())
+  }
+
+  return params
+}
