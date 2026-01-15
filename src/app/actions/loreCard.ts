@@ -3,10 +3,11 @@
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { CreateLoreCardFormData } from "@/schemas/loreCard"
-import type {
-  LoreCardWithTags,
-  LoreCardWithRelations,
-  Tag,
+import {
+  isTag,
+  isAuthor,
+  type LoreCardWithTags,
+  type LoreCardWithRelations,
 } from "@/types/loreCard"
 
 // アクション結果の型
@@ -54,7 +55,7 @@ export async function getLoreCards(
     tags:
       card.card_tags
         ?.map((ct: { tags: unknown }) => ct.tags)
-        .filter((tag: unknown): tag is Tag => tag !== null) ?? [],
+        .filter(isTag) ?? [],
   }))
 
   return { success: true, data: cardsWithTags }
@@ -107,8 +108,8 @@ export async function getLoreCard(
     tags:
       card.card_tags
         ?.map((ct: { tags: unknown }) => ct.tags)
-        .filter((tag: unknown): tag is Tag => tag !== null) ?? [],
-    author: card.profiles as LoreCardWithRelations["author"],
+        .filter(isTag) ?? [],
+    author: isAuthor(card.profiles) ? card.profiles : null,
   }
 
   return { success: true, data: cardWithRelations }

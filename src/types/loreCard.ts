@@ -25,6 +25,33 @@ export type LoreCardWithRelations = LoreCard & {
   author: Author | null
 }
 
+// 型ガード: Tag型かどうかを判定
+export function isTag(obj: unknown): obj is Tag {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "id" in obj &&
+    "name" in obj &&
+    typeof (obj as Tag).id === "string" &&
+    typeof (obj as Tag).name === "string"
+  )
+}
+
+// 型ガード: Author型かどうかを判定
+export function isAuthor(obj: unknown): obj is Author {
+  if (obj === null) return false
+  if (typeof obj !== "object") return false
+  const author = obj as Author
+  return (
+    "id" in author &&
+    typeof author.id === "string" &&
+    "display_name" in author &&
+    (author.display_name === null || typeof author.display_name === "string") &&
+    "avatar_url" in author &&
+    (author.avatar_url === null || typeof author.avatar_url === "string")
+  )
+}
+
 // 参照タイプの日本語ラベル
 export const referenceTypeLabels: Record<ReferenceType, string> = {
   depends_on: "依存",
