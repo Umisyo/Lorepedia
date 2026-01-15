@@ -104,7 +104,6 @@ export function ProjectCreateForm() {
                   className="min-h-[100px] resize-y"
                   disabled={isSubmitting}
                   {...field}
-                  value={field.value ?? ""}
                 />
               </FormControl>
               <FormDescription>

@@ -32,10 +32,10 @@ export async function createProject(
   if (!parsed.success) {
     // 最初のエラーメッセージを返す
     const firstError = parsed.error.issues[0]
-    if (!firstError) {
-      return { success: false, error: "入力内容に誤りがあります" }
+    return {
+      success: false,
+      error: firstError?.message ?? "入力内容に誤りがあります",
     }
-    return { success: false, error: firstError.message }
   }
 
   const { name, description, isPublicEditable, tags } = parsed.data
