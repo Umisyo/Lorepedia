@@ -1,6 +1,14 @@
 import '@testing-library/jest-dom'
 import { server } from '@/mocks/server'
 
+// ResizeObserver モック（Radix UI コンポーネント用）
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver = ResizeObserverMock
+
 // Establish API mocking before all tests
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 
