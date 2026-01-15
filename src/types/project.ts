@@ -6,6 +6,9 @@ export type Project = Tables<"projects">
 // プロジェクトメンバー基本型
 export type ProjectMember = Tables<"project_members">
 
+// プロジェクトタグ基本型
+export type ProjectTag = Tables<"project_tags">
+
 // メンバーロール
 export type MemberRole = Enums<"member_role">
 
