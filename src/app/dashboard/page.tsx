@@ -1,6 +1,90 @@
-import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/navigation"
 import Link from "next/link"
+import { redirect } from "next/navigation"
+import { Plus } from "lucide-react"
+
+import { createClient } from "@/utils/supabase/server"
+import { Button } from "@/components/ui/button"
+import { ProjectCard } from "@/components/features/ProjectCard"
+import { EmptyState } from "@/components/features/EmptyState"
+import type { ProjectWithMeta, MemberRole, Project } from "@/types/project"
+
+// Supabaseクエリ結果の型
+type MembershipWithProject = {
+  role: MemberRole
+  project: Project | null
+}
+
+// 型ガード: projectがnullでないMembershipかどうかを判定
+function hasValidProject(
+  m: MembershipWithProject
+): m is MembershipWithProject & { project: Project } {
+  return m.project !== null
+}
+
+// データ取得結果の型
+type GetProjectsResult =
+  | { success: true; projects: ProjectWithMeta[] }
+  | { success: false; error: string }
+
+// 参加中プロジェクト一覧を取得
+async function getProjects(userId: string): Promise<GetProjectsResult> {
+  const supabase = await createClient()
+
+  // ユーザーが参加しているプロジェクトを取得
+  const { data: memberships, error } = await supabase
+    .from("project_members")
+    .select(
+      `
+      role,
+      project:projects (
+        id,
+        name,
+        description,
+        owner_id,
+        created_at,
+        updated_at
+      )
+    `
+    )
+    .eq("user_id", userId)
+    .order("joined_at", { ascending: false })
+
+  if (error) {
+    console.error("Failed to fetch projects:", error)
+    return { success: false, error: "プロジェクト一覧の取得に失敗しました" }
+  }
+
+  if (!memberships) {
+    return { success: true, projects: [] }
+  }
+
+  // Supabaseのリレーション結果を型安全に変換
+  const typedMemberships = memberships as unknown as MembershipWithProject[]
+
+  // 各プロジェクトのメンバー数を取得
+  const projectsWithMeta: ProjectWithMeta[] = await Promise.all(
+    typedMemberships.filter(hasValidProject).map(async (membership) => {
+      const project = membership.project
+
+      const { count, error: countError } = await supabase
+        .from("project_members")
+        .select("*", { count: "exact", head: true })
+        .eq("project_id", project.id)
+
+      if (countError) {
+        console.error("Failed to fetch member count:", countError)
+      }
+
+      return {
+        ...project,
+        memberCount: count ?? 1,
+        myRole: membership.role,
+      }
+    })
+  )
+
+  return { success: true, projects: projectsWithMeta }
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -9,34 +93,43 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // 未ログインの場合はサインアップページにリダイレクト
+  // 未ログインの場合はログインページにリダイレクト
   if (!user) {
-    redirect("/signup")
+    redirect("/login")
   }
 
+  const result = await getProjects(user.id)
+
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-16">
-      <div className="rounded-lg border bg-card p-8 text-center">
-        <h1 className="mb-4 text-2xl font-bold">ようこそ！</h1>
-        <p className="mb-6 text-muted-foreground">
-          アカウントの作成が完了しました。
-          <br />
-          ダッシュボードは現在開発中です。
-        </p>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            ログイン中: <span className="font-medium">{user.email}</span>
+    <div className="container mx-auto max-w-6xl px-4 py-8">
+      {/* ページヘッダー */}
+      <div className="mb-8 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">ダッシュボード</h1>
+        <Button asChild>
+          <Link href="/projects/new">
+            <Plus className="mr-2 h-4 w-4" />
+            新規プロジェクト
+          </Link>
+        </Button>
+      </div>
+
+      {/* エラー状態 */}
+      {!result.success ? (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
+          <p className="text-destructive">{result.error}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            しばらく時間をおいてから再度お試しください
           </p>
         </div>
-        <div className="mt-8">
-          <Link
-            href="/"
-            className="text-primary underline-offset-4 hover:underline"
-          >
-            トップページに戻る
-          </Link>
+      ) : result.projects.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {result.projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
         </div>
-      </div>
+      )}
     </div>
   )
 }
