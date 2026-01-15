@@ -41,11 +41,11 @@ export default async function CardDetailPage({ params }: Props) {
       {/* ヘッダー */}
       <div className="mb-8">
         <Link
-          href={`/projects/${projectId}/cards`}
+          href={`/projects/${projectId}`}
           className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
-          {project.name} のカード一覧に戻る
+          {project.name} に戻る
         </Link>
       </div>
 
