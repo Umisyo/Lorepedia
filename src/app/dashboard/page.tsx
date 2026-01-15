@@ -14,6 +14,34 @@ type MembershipWithProject = {
   project: Project | null
 }
 
+// 有効なMemberRoleの値リスト
+const VALID_MEMBER_ROLES: readonly MemberRole[] = [
+  "owner",
+  "editor",
+  "viewer",
+] as const
+
+// 型ガード: 値が有効なMemberRoleかどうかを判定
+function isValidMemberRole(value: unknown): value is MemberRole {
+  return (
+    typeof value === "string" && VALID_MEMBER_ROLES.includes(value as MemberRole)
+  )
+}
+
+// Supabaseの結果を安全にMembershipWithProjectに変換
+function toMembershipWithProject(m: unknown): MembershipWithProject | null {
+  if (typeof m !== "object" || m === null) return null
+  if (!("role" in m) || !("project" in m)) return null
+  const raw = m as { role: unknown; project: unknown }
+  if (!isValidMemberRole(raw.role)) return null
+  // projectがオブジェクトまたはnullであることを確認
+  if (raw.project !== null && typeof raw.project !== "object") return null
+  return {
+    role: raw.role,
+    project: raw.project as Project | null,
+  }
+}
+
 // 型ガード: projectがnullでないMembershipかどうかを判定
 function hasValidProject(
   m: MembershipWithProject
@@ -58,8 +86,10 @@ async function getProjects(userId: string): Promise<GetProjectsResult> {
     return { success: true, projects: [] }
   }
 
-  // Supabaseのリレーション結果を型安全に変換
-  const typedMemberships = memberships as unknown as MembershipWithProject[]
+  // Supabaseのリレーション結果を型安全に変換（無効なデータはフィルタリング）
+  const typedMemberships = memberships
+    .map(toMembershipWithProject)
+    .filter((m): m is MembershipWithProject => m !== null)
 
   // 各プロジェクトのメンバー数を取得
   const projectsWithMeta: ProjectWithMeta[] = await Promise.all(

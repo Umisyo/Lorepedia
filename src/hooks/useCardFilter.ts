@@ -2,20 +2,13 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useCallback, useMemo, useTransition } from "react"
-import type { CardFilterState, SortBy, SortOrder, ViewMode } from "@/types/filter"
-
-// デフォルト値
-const DEFAULT_FILTERS: CardFilterState = {
-  search: "",
-  tags: [],
-  authors: [],
-  dateFrom: "",
-  dateTo: "",
-  sortBy: "updated_at",
-  sortOrder: "desc",
-  viewMode: "grid",
-  page: 1,
-}
+import type { CardFilterState } from "@/types/filter"
+import {
+  sortBySchema,
+  sortOrderSchema,
+  viewModeSchema,
+  DEFAULT_CARD_FILTERS,
+} from "@/schemas/cardFilter"
 
 export function useCardFilter() {
   const searchParams = useSearchParams()
@@ -30,22 +23,25 @@ export function useCardFilter() {
     const viewModeParam = searchParams.get("view")
     const pageParam = searchParams.get("page")
 
+    // Zodスキーマで安全にパース（無効値はデフォルト値を使用）
+    const sortByResult = sortBySchema.safeParse(sortByParam)
+    const sortOrderResult = sortOrderSchema.safeParse(sortOrderParam)
+    const viewModeResult = viewModeSchema.safeParse(viewModeParam)
+
     return {
-      search: searchParams.get("q") ?? DEFAULT_FILTERS.search,
+      search: searchParams.get("q") ?? DEFAULT_CARD_FILTERS.search,
       tags: searchParams.getAll("tag"),
       authors: searchParams.getAll("author"),
-      dateFrom: searchParams.get("from") ?? DEFAULT_FILTERS.dateFrom,
-      dateTo: searchParams.get("to") ?? DEFAULT_FILTERS.dateTo,
-      sortBy: (["created_at", "updated_at", "title"].includes(sortByParam ?? "")
-        ? sortByParam
-        : DEFAULT_FILTERS.sortBy) as SortBy,
-      sortOrder: (["asc", "desc"].includes(sortOrderParam ?? "")
-        ? sortOrderParam
-        : DEFAULT_FILTERS.sortOrder) as SortOrder,
-      viewMode: (["grid", "list"].includes(viewModeParam ?? "")
-        ? viewModeParam
-        : DEFAULT_FILTERS.viewMode) as ViewMode,
-      page: pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : DEFAULT_FILTERS.page,
+      dateFrom: searchParams.get("from") ?? DEFAULT_CARD_FILTERS.dateFrom,
+      dateTo: searchParams.get("to") ?? DEFAULT_CARD_FILTERS.dateTo,
+      sortBy: sortByResult.success ? sortByResult.data : DEFAULT_CARD_FILTERS.sortBy,
+      sortOrder: sortOrderResult.success
+        ? sortOrderResult.data
+        : DEFAULT_CARD_FILTERS.sortOrder,
+      viewMode: viewModeResult.success
+        ? viewModeResult.data
+        : DEFAULT_CARD_FILTERS.viewMode,
+      page: pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : DEFAULT_CARD_FILTERS.page,
     }
   }, [searchParams])
 
@@ -99,7 +95,7 @@ export function useCardFilter() {
 
       // ソート項目
       if (updates.sortBy !== undefined) {
-        if (updates.sortBy !== DEFAULT_FILTERS.sortBy) {
+        if (updates.sortBy !== DEFAULT_CARD_FILTERS.sortBy) {
           params.set("sort", updates.sortBy)
         } else {
           params.delete("sort")
@@ -108,7 +104,7 @@ export function useCardFilter() {
 
       // ソート順
       if (updates.sortOrder !== undefined) {
-        if (updates.sortOrder !== DEFAULT_FILTERS.sortOrder) {
+        if (updates.sortOrder !== DEFAULT_CARD_FILTERS.sortOrder) {
           params.set("order", updates.sortOrder)
         } else {
           params.delete("order")
@@ -117,7 +113,7 @@ export function useCardFilter() {
 
       // 表示モード
       if (updates.viewMode !== undefined) {
-        if (updates.viewMode !== DEFAULT_FILTERS.viewMode) {
+        if (updates.viewMode !== DEFAULT_CARD_FILTERS.viewMode) {
           params.set("view", updates.viewMode)
         } else {
           params.delete("view")

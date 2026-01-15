@@ -1,4 +1,5 @@
 import { z } from "zod"
+import type { CardFilterState } from "@/types/filter"
 
 // ソート対象カラムのスキーマ
 export const sortBySchema = z.enum(["created_at", "updated_at", "title"])
@@ -8,6 +9,19 @@ export const sortOrderSchema = z.enum(["asc", "desc"])
 
 // 表示モードのスキーマ
 export const viewModeSchema = z.enum(["grid", "list"])
+
+// フィルタのデフォルト値（SSOT: Single Source of Truth）
+export const DEFAULT_CARD_FILTERS: CardFilterState = {
+  search: "",
+  tags: [],
+  authors: [],
+  dateFrom: "",
+  dateTo: "",
+  sortBy: "updated_at",
+  sortOrder: "desc",
+  viewMode: "grid",
+  page: 1,
+}
 
 // フィルタパラメータのスキーマ
 export const cardFilterSchema = z.object({
@@ -28,20 +42,35 @@ export type CardFilterParams = z.infer<typeof cardFilterSchema>
 export function parseFilterParams(
   searchParams: URLSearchParams
 ): CardFilterParams {
+  // Zodで安全にパース（無効値はデフォルト値を使用）
+  const sortByResult = sortBySchema.safeParse(searchParams.get("sort"))
+  const sortOrderResult = sortOrderSchema.safeParse(searchParams.get("order"))
+  const viewModeResult = viewModeSchema.safeParse(searchParams.get("view"))
+
   return {
-    search: searchParams.get("q") ?? "",
+    search: searchParams.get("q") ?? DEFAULT_CARD_FILTERS.search,
     tags: searchParams.getAll("tag").filter((id) => id.length > 0),
     authors: searchParams.getAll("author").filter((id) => id.length > 0),
-    dateFrom: searchParams.get("from") ?? "",
-    dateTo: searchParams.get("to") ?? "",
-    sortBy: sortBySchema.catch("updated_at").parse(searchParams.get("sort")),
-    sortOrder: sortOrderSchema.catch("desc").parse(searchParams.get("order")),
-    viewMode: viewModeSchema.catch("grid").parse(searchParams.get("view")),
-    page: Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1),
+    dateFrom: searchParams.get("from") ?? DEFAULT_CARD_FILTERS.dateFrom,
+    dateTo: searchParams.get("to") ?? DEFAULT_CARD_FILTERS.dateTo,
+    sortBy: sortByResult.success
+      ? sortByResult.data
+      : DEFAULT_CARD_FILTERS.sortBy,
+    sortOrder: sortOrderResult.success
+      ? sortOrderResult.data
+      : DEFAULT_CARD_FILTERS.sortOrder,
+    viewMode: viewModeResult.success
+      ? viewModeResult.data
+      : DEFAULT_CARD_FILTERS.viewMode,
+    page: Math.max(
+      1,
+      parseInt(searchParams.get("page") ?? "1", 10) || DEFAULT_CARD_FILTERS.page
+    ),
   }
 }
 
 // フィルタパラメータをURLSearchParamsに変換するヘルパー
+// デフォルト値と同じ場合はパラメータを省略（URLを短くする）
 export function buildFilterParams(
   filters: Partial<CardFilterParams>
 ): URLSearchParams {
@@ -66,16 +95,19 @@ export function buildFilterParams(
   if (filters.dateTo) {
     params.set("to", filters.dateTo)
   }
-  if (filters.sortBy && filters.sortBy !== "updated_at") {
+  if (filters.sortBy && filters.sortBy !== DEFAULT_CARD_FILTERS.sortBy) {
     params.set("sort", filters.sortBy)
   }
-  if (filters.sortOrder && filters.sortOrder !== "desc") {
+  if (
+    filters.sortOrder &&
+    filters.sortOrder !== DEFAULT_CARD_FILTERS.sortOrder
+  ) {
     params.set("order", filters.sortOrder)
   }
-  if (filters.viewMode && filters.viewMode !== "grid") {
+  if (filters.viewMode && filters.viewMode !== DEFAULT_CARD_FILTERS.viewMode) {
     params.set("view", filters.viewMode)
   }
-  if (filters.page && filters.page > 1) {
+  if (filters.page && filters.page > DEFAULT_CARD_FILTERS.page) {
     params.set("page", filters.page.toString())
   }
 
