@@ -95,6 +95,23 @@ describe("TagInput", () => {
 
       expect(onChange).toHaveBeenCalledWith(["トリムテスト"])
     })
+
+    it("複数カンマを含む入力でも全てのタグが追加される（ペースト時）", async () => {
+      // 注: userEvent.typeは各文字を個別に入力するため、
+      // 各カンマ入力時に別々のonChangeが呼ばれる。
+      // 実際のユースケースとして問題になるのはペースト時なので、
+      // pasteでテストする。
+      const onChange = vi.fn()
+      render(<TagInput {...defaultProps} onChange={onChange} />)
+
+      const input = screen.getByPlaceholderText("タグを入力してEnterで追加")
+      await userEvent.click(input)
+      // 複数カンマを含む文字列をペースト
+      await userEvent.paste("タグA,タグB,タグC,")
+
+      expect(onChange).toHaveBeenLastCalledWith(["タグA", "タグB", "タグC"])
+    })
+
   })
 
   describe("タグ削除", () => {

@@ -27,38 +27,59 @@ export function TagInput({
   const [inputValue, setInputValue] = useState("")
   const [error, setError] = useState<string | null>(null)
 
-  const addTag = useCallback(
-    (tagName: string) => {
-      const trimmed = tagName.trim()
+  // 複数のタグを一度に追加する関数
+  const addTags = useCallback(
+    (tagNames: string[]) => {
+      const currentTags = [...value]
+      let lastError: string | null = null
 
-      // 空文字チェック
-      if (!trimmed) {
-        return
+      for (const tagName of tagNames) {
+        const trimmed = tagName.trim()
+
+        // 空文字チェック
+        if (!trimmed) {
+          continue
+        }
+
+        // 最大文字数チェック
+        if (trimmed.length > maxTagLength) {
+          lastError = `タグ名は${maxTagLength}文字以内で入力してください`
+          continue
+        }
+
+        // 最大個数チェック
+        if (currentTags.length >= maxTags) {
+          lastError = `タグは最大${maxTags}個まで設定できます`
+          break
+        }
+
+        // 重複チェック（既存のタグと新しく追加するタグの両方をチェック）
+        if (currentTags.includes(trimmed)) {
+          lastError = "このタグは既に追加されています"
+          continue
+        }
+
+        currentTags.push(trimmed)
       }
 
-      // 最大文字数チェック
-      if (trimmed.length > maxTagLength) {
-        setError(`タグ名は${maxTagLength}文字以内で入力してください`)
-        return
+      // 変更があった場合のみ更新
+      if (currentTags.length > value.length) {
+        setError(null)
+        onChange(currentTags)
+        setInputValue("")
+      } else if (lastError) {
+        setError(lastError)
       }
-
-      // 最大個数チェック
-      if (value.length >= maxTags) {
-        setError(`タグは最大${maxTags}個まで設定できます`)
-        return
-      }
-
-      // 重複チェック
-      if (value.includes(trimmed)) {
-        setError("このタグは既に追加されています")
-        return
-      }
-
-      setError(null)
-      onChange([...value, trimmed])
-      setInputValue("")
     },
     [value, onChange, maxTags, maxTagLength]
+  )
+
+  // 単一のタグを追加する関数（addTagsのラッパー）
+  const addTag = useCallback(
+    (tagName: string) => {
+      addTags([tagName])
+    },
+    [addTags]
   )
 
   const removeTag = useCallback(
@@ -91,19 +112,20 @@ export function TagInput({
       // カンマが入力された場合、タグを追加
       if (newValue.includes(",")) {
         const parts = newValue.split(",")
-        parts.forEach((part, index) => {
-          if (index < parts.length - 1) {
-            addTag(part)
-          } else {
-            setInputValue(part)
-          }
-        })
+        // 最後のパート以外をタグとして追加（一度に追加）
+        const tagsToAdd = parts.slice(0, -1)
+        const remainder = parts[parts.length - 1]
+
+        if (tagsToAdd.length > 0) {
+          addTags(tagsToAdd)
+        }
+        setInputValue(remainder)
       } else {
         setInputValue(newValue)
         setError(null)
       }
     },
-    [addTag]
+    [addTags]
   )
 
   return (

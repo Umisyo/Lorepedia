@@ -99,10 +99,7 @@ describe("createProjectSchema", () => {
       }
     })
 
-    it("名前が空白のみの場合、トリムされて空文字になるがバリデーションはトリム前に行われる", () => {
-      // 注: Zodのtransformはバリデーション後に適用されるため、
-      // "   " (3文字)はmin(1)をパスし、transform後に "" になる
-      // この挙動はServer Action側で追加のバリデーションで対応している
+    it("名前が空白のみの場合エラー（トリム後にバリデーション）", () => {
       const data = {
         name: "   ",
         description: "",
@@ -112,11 +109,12 @@ describe("createProjectSchema", () => {
 
       const result = createProjectSchema.safeParse(data)
 
-      // トリム前の値でmin(1)をパスするため、parseは成功する
-      expect(result.success).toBe(true)
-      if (result.success) {
-        // トリム後は空文字になる
-        expect(result.data.name).toBe("")
+      // preprocessでトリムしてからmin(1)をチェックするため、エラーになる
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "プロジェクト名を入力してください"
+        )
       }
     })
 
