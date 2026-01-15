@@ -114,7 +114,7 @@ export default async function ProjectDetailPage({
 
       {/* フィルタバー */}
       <div className="mb-6">
-        <CardFilterBar tags={tags} initialFilters={filters} />
+        <CardFilterBar tags={tags} />
       </div>
 
       {/* カード一覧 */}
@@ -131,6 +131,7 @@ export default async function ProjectDetailPage({
             currentPage={cardsData.page}
             totalPages={cardsData.totalPages}
             total={cardsData.total}
+            pageSize={limit}
           />
         </div>
       )}

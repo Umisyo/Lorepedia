@@ -18,35 +18,35 @@ describe("Pagination", () => {
   })
 
   it("件数表示が正しくレンダリングされる", () => {
-    render(<Pagination currentPage={1} totalPages={5} total={50} />)
+    render(<Pagination currentPage={1} totalPages={5} total={50} pageSize={12} />)
 
     expect(screen.getByText(/全 50 件中/)).toBeInTheDocument()
     expect(screen.getByText(/1 - 12 件を表示/)).toBeInTheDocument()
   })
 
   it("最後のページで件数表示が正しい", () => {
-    render(<Pagination currentPage={5} totalPages={5} total={50} />)
+    render(<Pagination currentPage={5} totalPages={5} total={50} pageSize={12} />)
 
     // 49件目から50件目を表示
     expect(screen.getByText(/49 - 50 件を表示/)).toBeInTheDocument()
   })
 
   it("前へボタンが最初のページで無効化される", () => {
-    render(<Pagination currentPage={1} totalPages={5} total={50} />)
+    render(<Pagination currentPage={1} totalPages={5} total={50} pageSize={12} />)
 
     const prevButton = screen.getByRole("button", { name: "前のページ" })
     expect(prevButton).toBeDisabled()
   })
 
   it("次へボタンが最後のページで無効化される", () => {
-    render(<Pagination currentPage={5} totalPages={5} total={50} />)
+    render(<Pagination currentPage={5} totalPages={5} total={50} pageSize={12} />)
 
     const nextButton = screen.getByRole("button", { name: "次のページ" })
     expect(nextButton).toBeDisabled()
   })
 
   it("前へボタンをクリックするとsetFiltersが呼ばれる", () => {
-    render(<Pagination currentPage={3} totalPages={5} total={50} />)
+    render(<Pagination currentPage={3} totalPages={5} total={50} pageSize={12} />)
 
     const prevButton = screen.getByRole("button", { name: "前のページ" })
     fireEvent.click(prevButton)
@@ -55,7 +55,7 @@ describe("Pagination", () => {
   })
 
   it("次へボタンをクリックするとsetFiltersが呼ばれる", () => {
-    render(<Pagination currentPage={3} totalPages={5} total={50} />)
+    render(<Pagination currentPage={3} totalPages={5} total={50} pageSize={12} />)
 
     const nextButton = screen.getByRole("button", { name: "次のページ" })
     fireEvent.click(nextButton)
@@ -64,7 +64,7 @@ describe("Pagination", () => {
   })
 
   it("ページ番号をクリックするとsetFiltersが呼ばれる", () => {
-    render(<Pagination currentPage={1} totalPages={5} total={50} />)
+    render(<Pagination currentPage={1} totalPages={5} total={50} pageSize={12} />)
 
     // ページ番号2をクリック
     const page2Button = screen.getByRole("button", { name: "2" })
@@ -74,7 +74,7 @@ describe("Pagination", () => {
   })
 
   it("現在のページがハイライトされる", () => {
-    render(<Pagination currentPage={3} totalPages={5} total={50} />)
+    render(<Pagination currentPage={3} totalPages={5} total={50} pageSize={12} />)
 
     // 現在のページ3のボタンを取得
     const buttons = screen.getAllByRole("button")
@@ -85,7 +85,7 @@ describe("Pagination", () => {
   })
 
   it("ページ数が少ない場合は省略記号が表示されない", () => {
-    render(<Pagination currentPage={1} totalPages={3} total={30} />)
+    render(<Pagination currentPage={1} totalPages={3} total={30} pageSize={12} />)
 
     // 省略記号のアイコンが存在しないことを確認
     const ellipsisButtons = screen.queryAllByRole("button", { name: "" })
@@ -96,7 +96,7 @@ describe("Pagination", () => {
   })
 
   it("ページ数が多い場合は省略記号が表示される", () => {
-    render(<Pagination currentPage={5} totalPages={10} total={100} />)
+    render(<Pagination currentPage={5} totalPages={10} total={100} pageSize={12} />)
 
     // 省略記号を示す無効化されたボタンが存在する
     const buttons = screen.getAllByRole("button")

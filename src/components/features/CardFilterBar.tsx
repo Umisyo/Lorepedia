@@ -16,14 +16,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TagFilter } from "./TagFilter"
 import { useCardFilter } from "@/hooks/useCardFilter"
 import type { Tag } from "@/types/loreCard"
-import type { CardFilterState, SortBy, ViewMode } from "@/types/filter"
+import type { SortBy, ViewMode } from "@/types/filter"
 
 type Props = {
   tags: Tag[]
-  initialFilters: CardFilterState
 }
 
-export function CardFilterBar({ tags, initialFilters }: Props) {
+export function CardFilterBar({ tags }: Props) {
   const { filters, setFilters, isPending } = useCardFilter()
 
   // 検索入力のデバウンス処理
@@ -75,7 +74,7 @@ export function CardFilterBar({ tags, initialFilters }: Props) {
           <Input
             type="text"
             placeholder="カードを検索..."
-            defaultValue={initialFilters.search}
+            value={filters.search}
             onChange={handleSearchChange}
             disabled={isPending}
             className="pl-10"

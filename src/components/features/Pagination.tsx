@@ -9,9 +9,10 @@ type Props = {
   currentPage: number
   totalPages: number
   total: number
+  pageSize: number
 }
 
-export function Pagination({ currentPage, totalPages, total }: Props) {
+export function Pagination({ currentPage, totalPages, total, pageSize }: Props) {
   const { setFilters, isPending } = useCardFilter()
 
   // ページ番号の配列を生成
@@ -73,7 +74,8 @@ export function Pagination({ currentPage, totalPages, total }: Props) {
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
       {/* 件数表示 */}
       <p className="text-sm text-muted-foreground">
-        全 {total} 件中 {(currentPage - 1) * 12 + 1} - {Math.min(currentPage * 12, total)} 件を表示
+        全 {total} 件中 {(currentPage - 1) * pageSize + 1} -{" "}
+        {Math.min(currentPage * pageSize, total)} 件を表示
       </p>
 
       {/* ページネーション */}

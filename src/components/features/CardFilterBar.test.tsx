@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { CardFilterBar } from "./CardFilterBar"
 import type { Tag } from "@/types/loreCard"
-import type { CardFilterState } from "@/types/filter"
 
 // useCardFilterフックのモック
 const mockSetFilters = vi.fn()
@@ -47,25 +46,13 @@ const mockTags: Tag[] = [
   },
 ]
 
-const mockInitialFilters: CardFilterState = {
-  search: "",
-  tags: [],
-  authors: [],
-  dateFrom: "",
-  dateTo: "",
-  sortBy: "updated_at",
-  sortOrder: "desc",
-  viewMode: "grid",
-  page: 1,
-}
-
 describe("CardFilterBar", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it("フィルタバーがレンダリングされる", () => {
-    render(<CardFilterBar tags={mockTags} initialFilters={mockInitialFilters} />)
+    render(<CardFilterBar tags={mockTags} />)
 
     // 検索入力が存在する
     expect(screen.getByPlaceholderText("カードを検索...")).toBeInTheDocument()
@@ -79,7 +66,7 @@ describe("CardFilterBar", () => {
   })
 
   it("検索入力で値を変更するとsetFiltersが呼ばれる", () => {
-    render(<CardFilterBar tags={mockTags} initialFilters={mockInitialFilters} />)
+    render(<CardFilterBar tags={mockTags} />)
 
     const searchInput = screen.getByPlaceholderText("カードを検索...")
     fireEvent.change(searchInput, { target: { value: "テスト検索" } })
@@ -88,7 +75,7 @@ describe("CardFilterBar", () => {
   })
 
   it("ソート順トグルボタンをクリックするとsetFiltersが呼ばれる", () => {
-    render(<CardFilterBar tags={mockTags} initialFilters={mockInitialFilters} />)
+    render(<CardFilterBar tags={mockTags} />)
 
     // ソート順トグルボタンをクリック（title属性で特定）
     const sortToggleButton = screen.getByTitle("降順")
@@ -98,7 +85,7 @@ describe("CardFilterBar", () => {
   })
 
   it("グリッド表示とリスト表示のタブが存在する", () => {
-    render(<CardFilterBar tags={mockTags} initialFilters={mockInitialFilters} />)
+    render(<CardFilterBar tags={mockTags} />)
 
     // グリッド表示とリスト表示のタブが存在する
     expect(screen.getByRole("tab", { name: "グリッド表示" })).toBeInTheDocument()
@@ -106,7 +93,7 @@ describe("CardFilterBar", () => {
   })
 
   it("タグがない場合でもエラーなくレンダリングされる", () => {
-    render(<CardFilterBar tags={[]} initialFilters={mockInitialFilters} />)
+    render(<CardFilterBar tags={[]} />)
 
     expect(screen.getByPlaceholderText("カードを検索...")).toBeInTheDocument()
   })
