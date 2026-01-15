@@ -14,8 +14,20 @@ type MembershipWithProject = {
   project: Project | null
 }
 
+// 型ガード: projectがnullでないMembershipかどうかを判定
+function hasValidProject(
+  m: MembershipWithProject
+): m is MembershipWithProject & { project: Project } {
+  return m.project !== null
+}
+
+// データ取得結果の型
+type GetProjectsResult =
+  | { success: true; projects: ProjectWithMeta[] }
+  | { success: false; error: string }
+
 // 参加中プロジェクト一覧を取得
-async function getProjects(userId: string): Promise<ProjectWithMeta[]> {
+async function getProjects(userId: string): Promise<GetProjectsResult> {
   const supabase = await createClient()
 
   // ユーザーが参加しているプロジェクトを取得
@@ -37,35 +49,37 @@ async function getProjects(userId: string): Promise<ProjectWithMeta[]> {
     .eq("user_id", userId)
     .order("joined_at", { ascending: false })
 
-  if (error || !memberships) {
+  if (error) {
     console.error("Failed to fetch projects:", error)
-    return []
+    return { success: false, error: "プロジェクト一覧の取得に失敗しました" }
   }
 
-  // 型安全にデータを変換
+  if (!memberships) {
+    return { success: true, projects: [] }
+  }
+
+  // Supabaseのリレーション結果を型安全に変換
   const typedMemberships = memberships as unknown as MembershipWithProject[]
 
   // 各プロジェクトのメンバー数を取得
   const projectsWithMeta: ProjectWithMeta[] = await Promise.all(
-    typedMemberships
-      .filter((m): m is MembershipWithProject & { project: Project } => m.project !== null)
-      .map(async (membership) => {
-        const project = membership.project
+    typedMemberships.filter(hasValidProject).map(async (membership) => {
+      const project = membership.project
 
-        const { count } = await supabase
-          .from("project_members")
-          .select("*", { count: "exact", head: true })
-          .eq("project_id", project.id)
+      const { count } = await supabase
+        .from("project_members")
+        .select("*", { count: "exact", head: true })
+        .eq("project_id", project.id)
 
-        return {
-          ...project,
-          memberCount: count ?? 1,
-          myRole: membership.role,
-        }
-      })
+      return {
+        ...project,
+        memberCount: count ?? 1,
+        myRole: membership.role,
+      }
+    })
   )
 
-  return projectsWithMeta
+  return { success: true, projects: projectsWithMeta }
 }
 
 export default async function DashboardPage() {
@@ -80,7 +94,7 @@ export default async function DashboardPage() {
     redirect("/login")
   }
 
-  const projects = await getProjects(user.id)
+  const result = await getProjects(user.id)
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8">
@@ -95,12 +109,19 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
-      {/* プロジェクト一覧 */}
-      {projects.length === 0 ? (
+      {/* エラー状態 */}
+      {!result.success ? (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
+          <p className="text-destructive">{result.error}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            しばらく時間をおいてから再度お試しください
+          </p>
+        </div>
+      ) : result.projects.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
+          {result.projects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
