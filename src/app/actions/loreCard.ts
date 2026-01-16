@@ -355,6 +355,7 @@ export async function updateLoreCard(
   }
 
   revalidatePath(`/projects/${projectId}/cards/${cardId}`)
+  revalidatePath(`/projects/${projectId}/cards`)
   revalidatePath(`/projects/${projectId}`)
 
   return { success: true, data: { id: cardId } }
