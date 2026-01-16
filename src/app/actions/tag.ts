@@ -167,12 +167,17 @@ export async function createTag(
     }
   }
 
-  // 重複チェック（同一プロジェクト内で同名タグ禁止）
+  // 重複チェック（同一プロジェクト内で同名タグ禁止、大文字小文字を区別しない）
+  // ilikeのワイルドカード文字（%と_）をエスケープして誤マッチを防ぐ
+  const escapedName = parsed.data.name
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
   const { data: existingTag } = await supabase
     .from("tags")
     .select("id")
     .eq("project_id", projectId)
-    .ilike("name", parsed.data.name)
+    .ilike("name", escapedName)
     .maybeSingle()
 
   if (existingTag) {
