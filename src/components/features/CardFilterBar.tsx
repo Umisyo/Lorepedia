@@ -1,7 +1,7 @@
 "use client"
 
 import { Search, Grid, List, ArrowUpDown } from "lucide-react"
-import { useCallback } from "react"
+import { useCallback, useState, useEffect } from "react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,12 +25,33 @@ type Props = {
 export function CardFilterBar({ tags }: Props) {
   const { filters, setFilters, isPending } = useCardFilter()
 
-  // 検索入力のデバウンス処理
+  // 検索入力のローカル状態（即時反映用）
+  const [localSearch, setLocalSearch] = useState(filters.search)
+
+  // デバウンス処理（300ms後にURL更新）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== filters.search) {
+        setFilters({ search: localSearch })
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [localSearch, filters.search, setFilters])
+
+  // URL変更時にローカル状態を同期（外部からURLが変更された場合のみ）
+  useEffect(() => {
+    if (filters.search !== localSearch) {
+      setLocalSearch(filters.search)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- localSearchを依存配列に含めると無限ループになる
+  }, [filters.search])
+
+  // 検索入力ハンドラ（ローカル状態のみ更新）
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFilters({ search: e.target.value })
+      setLocalSearch(e.target.value)
     },
-    [setFilters]
+    []
   )
 
   // タグフィルタ変更
@@ -74,7 +95,7 @@ export function CardFilterBar({ tags }: Props) {
           <Input
             type="text"
             placeholder="カードを検索..."
-            value={filters.search}
+            value={localSearch}
             onChange={handleSearchChange}
             disabled={isPending}
             className="pl-10"
