@@ -375,7 +375,9 @@ describe("LoreCardForm", () => {
 
       // フォームラベルとして「タグ」が表示されることを確認
       expect(screen.getByText("タグ")).toBeInTheDocument()
-      expect(screen.getByText("カードに関連するタグを選択")).toBeInTheDocument()
+      expect(
+        screen.getByText("カードに関連するタグを選択、または新規作成")
+      ).toBeInTheDocument()
     })
 
     it("編集モードで初期タグが設定される", () => {

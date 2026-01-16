@@ -49,6 +49,15 @@ export function LoreCardForm({
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  // タグ一覧をstateで管理（新規作成時に更新するため）
+  const [tags, setTags] = useState<Tag[]>(availableTags)
+
+  // 新規タグ作成時のコールバック
+  const handleTagCreated = (newTag: Tag) => {
+    setTags((prev) =>
+      [...prev, newTag].sort((a, b) => a.name.localeCompare(b.name, "ja"))
+    )
+  }
 
   const isEditMode = mode === "edit"
 
@@ -175,13 +184,18 @@ export function LoreCardForm({
               <FormLabel>タグ</FormLabel>
               <FormControl>
                 <TagFilter
-                  tags={availableTags}
+                  tags={tags}
                   selectedIds={field.value ?? []}
                   onChange={field.onChange}
                   disabled={isSubmitting}
+                  projectId={projectId}
+                  onTagCreated={handleTagCreated}
+                  allowCreate
                 />
               </FormControl>
-              <FormDescription>カードに関連するタグを選択</FormDescription>
+              <FormDescription>
+                カードに関連するタグを選択、または新規作成
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
