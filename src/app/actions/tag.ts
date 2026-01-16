@@ -108,18 +108,36 @@ export async function updateCardTags(
 
   // 追加対象のタグを追加
   if (toAdd.length > 0) {
-    const insertData = toAdd.map((tagId) => ({
-      card_id: cardId,
-      tag_id: tagId,
-    }))
+    // 追加対象のタグがこのプロジェクトに属しているか検証
+    const { data: validTags, error: validTagsError } = await supabase
+      .from("tags")
+      .select("id")
+      .eq("project_id", projectId)
+      .in("id", toAdd)
 
-    const { error: insertError } = await supabase
-      .from("card_tags")
-      .insert(insertData)
+    if (validTagsError) {
+      console.error("Failed to validate tags:", validTagsError)
+      return { success: false, error: "タグの検証に失敗しました" }
+    }
 
-    if (insertError) {
-      console.error("Failed to insert tags:", insertError)
-      return { success: false, error: "タグの追加に失敗しました" }
+    // プロジェクトに属するタグIDのみをフィルタリング
+    const validTagIds = new Set(validTags?.map((t) => t.id) ?? [])
+    const filteredToAdd = toAdd.filter((id) => validTagIds.has(id))
+
+    if (filteredToAdd.length > 0) {
+      const insertData = filteredToAdd.map((tagId) => ({
+        card_id: cardId,
+        tag_id: tagId,
+      }))
+
+      const { error: insertError } = await supabase
+        .from("card_tags")
+        .insert(insertData)
+
+      if (insertError) {
+        console.error("Failed to insert tags:", insertError)
+        return { success: false, error: "タグの追加に失敗しました" }
+      }
     }
   }
 
