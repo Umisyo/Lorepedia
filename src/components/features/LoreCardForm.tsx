@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
   FormControl,
@@ -17,6 +16,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form"
+import { RichTextEditor } from "@/components/features/editor"
 import {
   createLoreCardSchema,
   editLoreCardSchema,
@@ -125,14 +125,17 @@ export function LoreCardForm({
             <FormItem>
               <FormLabel>詳細</FormLabel>
               <FormControl>
-                <Textarea
+                <RichTextEditor
+                  content={field.value}
+                  onChange={field.onChange}
                   placeholder="世界設定の詳細を入力..."
-                  className="min-h-[300px] resize-y"
                   disabled={isSubmitting}
-                  {...field}
+                  projectId={projectId}
                 />
               </FormControl>
-              <FormDescription>Markdown記法が使用できます</FormDescription>
+              <FormDescription>
+                ツールバーまたはMarkdown記法で書式を設定できます。@でカードへのリンクを挿入できます。
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

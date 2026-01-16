@@ -3,13 +3,15 @@ import { ja } from "date-fns/locale"
 
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MarkdownRenderer } from "@/components/features/MarkdownRenderer"
 import type { LoreCardWithRelations } from "@/types/loreCard"
 
 type Props = {
   card: LoreCardWithRelations
+  projectId: string
 }
 
-export function LoreCardDetail({ card }: Props) {
+export function LoreCardDetail({ card, projectId }: Props) {
   const createdAt = formatDistanceToNow(new Date(card.created_at), {
     addSuffix: true,
     locale: ja,
@@ -62,12 +64,10 @@ export function LoreCardDetail({ card }: Props) {
       {/* 区切り線 */}
       <hr className="border-border" />
 
-      {/* 詳細内容 */}
-      <div className="prose prose-neutral dark:prose-invert max-w-none">
-        {/* Phase 1ではプレーンテキスト表示 */}
-        {/* Phase 2以降でreact-markdownを導入予定 */}
-        <div className="whitespace-pre-wrap">{card.content}</div>
-      </div>
+      {/* 詳細内容（Markdown対応） */}
+      {card.content && (
+        <MarkdownRenderer content={card.content} projectId={projectId} />
+      )}
     </div>
   )
 }
