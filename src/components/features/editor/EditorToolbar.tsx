@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { isValidUrl } from "@/lib/editor/validation"
 
 type Props = {
   editor: Editor | null
@@ -69,6 +70,10 @@ export function EditorToolbar({ editor }: Props) {
   const addLink = () => {
     const url = window.prompt("リンクURLを入力してください")
     if (url) {
+      if (!isValidUrl(url)) {
+        window.alert("無効なURLです。http:// または https:// で始まるURLを入力してください。")
+        return
+      }
       editor.chain().focus().setLink({ href: url }).run()
     }
   }
@@ -76,6 +81,10 @@ export function EditorToolbar({ editor }: Props) {
   const addImage = () => {
     const url = window.prompt("画像URLを入力してください")
     if (url) {
+      if (!isValidUrl(url)) {
+        window.alert("無効なURLです。http:// または https:// で始まるURLを入力してください。")
+        return
+      }
       editor.chain().focus().setImage({ src: url }).run()
     }
   }

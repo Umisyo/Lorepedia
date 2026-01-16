@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useCallback } from "react"
 import ReactMarkdown from "react-markdown"
 import rehypeSanitize from "rehype-sanitize"
 import rehypeHighlight from "rehype-highlight"
@@ -111,48 +112,58 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
   // カードメンションを含む場合はカスタム処理
   const hasCardMentions = hasCardMentionsInContent(content)
 
-  if (hasCardMentions) {
-    // カードメンションを含む場合は行ごとに処理してカスタムコンポーネントで表示
-    const lines = content.split("\n")
+  // カードメンション処理関数をメモ化
+  const processMentions = useCallback(
+    (text: string) => processCardMentions(text, projectId),
+    [projectId]
+  )
 
+  // カスタムコンポーネントをメモ化（不要な再レンダリングを防ぐ）
+  const customComponents = useMemo(
+    () => ({
+      // カスタムコンポーネントでカードメンションを処理
+      p: ({ children }: { children?: React.ReactNode }) => {
+        // 子要素がテキストの場合はカードメンションを処理
+        if (typeof children === "string") {
+          return <p>{processMentions(children)}</p>
+        }
+        return <p>{children}</p>
+      },
+      // 他のブロック要素でも同様に処理
+      li: ({ children }: { children?: React.ReactNode }) => {
+        if (typeof children === "string") {
+          return <li>{processMentions(children)}</li>
+        }
+        return <li>{children}</li>
+      },
+    }),
+    [processMentions]
+  )
+
+  // proseクラス設定
+  const proseClassName = cn(
+    "prose prose-neutral dark:prose-invert max-w-none",
+    "prose-headings:font-bold",
+    "prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-4",
+    "prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-3",
+    "prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2",
+    "prose-ul:list-disc prose-ul:pl-6",
+    "prose-ol:list-decimal prose-ol:pl-6",
+    "prose-blockquote:border-l-4 prose-blockquote:border-muted-foreground/30",
+    "prose-blockquote:pl-4 prose-blockquote:italic",
+    "prose-code:bg-muted prose-code:rounded prose-code:px-1.5 prose-code:py-0.5",
+    "prose-pre:bg-muted prose-pre:rounded prose-pre:p-4",
+    className
+  )
+
+  if (hasCardMentions) {
     return (
-      <div
-        className={cn(
-          "prose prose-neutral dark:prose-invert max-w-none",
-          "prose-headings:font-bold",
-          "prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-4",
-          "prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-3",
-          "prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2",
-          "prose-ul:list-disc prose-ul:pl-6",
-          "prose-ol:list-decimal prose-ol:pl-6",
-          "prose-blockquote:border-l-4 prose-blockquote:border-muted-foreground/30",
-          "prose-blockquote:pl-4 prose-blockquote:italic",
-          "prose-code:bg-muted prose-code:rounded prose-code:px-1.5 prose-code:py-0.5",
-          "prose-pre:bg-muted prose-pre:rounded prose-pre:p-4",
-          className
-        )}
-      >
+      <div className={proseClassName}>
         <ReactMarkdown
           rehypePlugins={[rehypeSanitize, rehypeHighlight]}
-          components={{
-            // カスタムコンポーネントでカードメンションを処理
-            p: ({ children }) => {
-              // 子要素がテキストの場合はカードメンションを処理
-              if (typeof children === "string") {
-                return <p>{processCardMentions(children, projectId)}</p>
-              }
-              return <p>{children}</p>
-            },
-            // 他のブロック要素でも同様に処理
-            li: ({ children }) => {
-              if (typeof children === "string") {
-                return <li>{processCardMentions(children, projectId)}</li>
-              }
-              return <li>{children}</li>
-            },
-          }}
+          components={customComponents}
         >
-          {lines.join("\n")}
+          {content}
         </ReactMarkdown>
       </div>
     )
@@ -160,22 +171,7 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
 
   // 通常のMarkdownレンダリング
   return (
-    <div
-      className={cn(
-        "prose prose-neutral dark:prose-invert max-w-none",
-        "prose-headings:font-bold",
-        "prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-4",
-        "prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-3",
-        "prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2",
-        "prose-ul:list-disc prose-ul:pl-6",
-        "prose-ol:list-decimal prose-ol:pl-6",
-        "prose-blockquote:border-l-4 prose-blockquote:border-muted-foreground/30",
-        "prose-blockquote:pl-4 prose-blockquote:italic",
-        "prose-code:bg-muted prose-code:rounded prose-code:px-1.5 prose-code:py-0.5",
-        "prose-pre:bg-muted prose-pre:rounded prose-pre:p-4",
-        className
-      )}
-    >
+    <div className={proseClassName}>
       <ReactMarkdown rehypePlugins={[rehypeSanitize, rehypeHighlight]}>
         {content}
       </ReactMarkdown>

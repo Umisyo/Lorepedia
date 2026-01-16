@@ -340,11 +340,13 @@ export async function searchCardsForMention(
   }
 
   // タイトルで部分一致検索（最大10件）
+  // ワイルドカード文字をエスケープしてSQLインジェクション対策
+  const escapedQuery = query.replace(/[%_\\]/g, "\\$&")
   const { data: cards, error } = await supabase
     .from("lore_cards")
     .select("id, title")
     .eq("project_id", projectId)
-    .ilike("title", `%${query}%`)
+    .ilike("title", `%${escapedQuery}%`)
     .order("title")
     .limit(10)
 
