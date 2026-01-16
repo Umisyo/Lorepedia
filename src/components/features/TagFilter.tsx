@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Check, ChevronsUpDown, X, Plus, Loader2, Search } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -42,19 +42,26 @@ export function TagFilter({
 
   const selectedTags = tags.filter((tag) => selectedIds.includes(tag.id))
 
-  // フィルタリングされたタグ
-  const filteredTags = tags.filter((tag) =>
-    tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // フィルタリングされたタグ（メモ化でパフォーマンス最適化）
+  const filteredTags = useMemo(
+    () =>
+      tags.filter((tag) =>
+        tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [tags, searchQuery]
   )
 
-  // 新規作成可能かどうか
-  const canCreate =
-    allowCreate &&
-    projectId &&
-    searchQuery.trim().length > 0 &&
-    !tags.some(
-      (tag) => tag.name.toLowerCase() === searchQuery.trim().toLowerCase()
-    )
+  // 新規作成可能かどうか（メモ化でパフォーマンス最適化）
+  const canCreate = useMemo(
+    () =>
+      allowCreate &&
+      projectId &&
+      searchQuery.trim().length > 0 &&
+      !tags.some(
+        (tag) => tag.name.toLowerCase() === searchQuery.trim().toLowerCase()
+      ),
+    [allowCreate, projectId, searchQuery, tags]
+  )
 
   const handleToggle = (tagId: string) => {
     if (selectedIds.includes(tagId)) {
