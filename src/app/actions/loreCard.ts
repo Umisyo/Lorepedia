@@ -318,3 +318,131 @@ export async function getProject(
 
   return project
 }
+
+// @メンション用カード検索の結果型
+export type CardMentionSuggestion = {
+  id: string
+  title: string
+}
+
+// @メンション用カード検索
+export async function searchCardsForMention(
+  projectId: string,
+  query: string
+): Promise<LoreCardActionResult<CardMentionSuggestion[]>> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: "ログインが必要です" }
+  }
+
+  // タイトルで部分一致検索（最大10件）
+  const { data: cards, error } = await supabase
+    .from("lore_cards")
+    .select("id, title")
+    .eq("project_id", projectId)
+    .ilike("title", `%${query}%`)
+    .order("title")
+    .limit(10)
+
+  if (error) {
+    console.error("Failed to search cards for mention:", error)
+    return { success: false, error: "カードの検索に失敗しました" }
+  }
+
+  return { success: true, data: cards ?? [] }
+}
+
+// card_references更新（mentionsタイプ）
+export async function updateCardReferences(
+  sourceCardId: string,
+  mentionedCardIds: string[]
+): Promise<LoreCardActionResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: "ログインが必要です" }
+  }
+
+  // 既存のmentions参照を削除
+  const { error: deleteError } = await supabase
+    .from("card_references")
+    .delete()
+    .eq("source_card_id", sourceCardId)
+    .eq("reference_type", "mentions")
+
+  if (deleteError) {
+    console.error("Failed to delete card references:", deleteError)
+    return { success: false, error: "参照の更新に失敗しました" }
+  }
+
+  // メンションがなければここで終了
+  if (mentionedCardIds.length === 0) {
+    return { success: true }
+  }
+
+  // 重複を除去
+  const uniqueCardIds = [...new Set(mentionedCardIds)]
+
+  // 新しい参照を追加
+  const references = uniqueCardIds.map((targetCardId) => ({
+    source_card_id: sourceCardId,
+    target_card_id: targetCardId,
+    reference_type: "mentions" as const,
+    created_by: user.id,
+  }))
+
+  const { error: insertError } = await supabase
+    .from("card_references")
+    .insert(references)
+
+  if (insertError) {
+    console.error("Failed to insert card references:", insertError)
+    return { success: false, error: "参照の追加に失敗しました" }
+  }
+
+  return { success: true }
+}
+
+// カードIDの存在確認（バリデーション用）
+export async function validateCardIds(
+  projectId: string,
+  cardIds: string[]
+): Promise<LoreCardActionResult<{ validIds: string[]; invalidIds: string[] }>> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: "ログインが必要です" }
+  }
+
+  if (cardIds.length === 0) {
+    return { success: true, data: { validIds: [], invalidIds: [] } }
+  }
+
+  // 存在するカードIDを取得
+  const { data: existingCards, error } = await supabase
+    .from("lore_cards")
+    .select("id")
+    .eq("project_id", projectId)
+    .in("id", cardIds)
+
+  if (error) {
+    console.error("Failed to validate card ids:", error)
+    return { success: false, error: "カードの検証に失敗しました" }
+  }
+
+  const existingIds = new Set(existingCards?.map((c) => c.id) ?? [])
+  const validIds = cardIds.filter((id) => existingIds.has(id))
+  const invalidIds = cardIds.filter((id) => !existingIds.has(id))
+
+  return { success: true, data: { validIds, invalidIds } }
+}

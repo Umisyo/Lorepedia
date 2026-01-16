@@ -50,7 +50,7 @@ export default async function CardDetailPage({ params }: Props) {
       </div>
 
       {/* カード詳細 */}
-      <LoreCardDetail card={card} />
+      <LoreCardDetail card={card} projectId={projectId} />
     </div>
   )
 }
