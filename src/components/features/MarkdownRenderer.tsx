@@ -118,8 +118,12 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
       }) => {
         if (href?.startsWith("card:")) {
           const cardId = href.replace("card:", "")
-          const cardTitle =
+          let cardTitle =
             typeof children === "string" ? children : String(children ?? "")
+          // Markdown形式 @[title](card:id) から変換された際に含まれる先頭の @ を除去
+          if (cardTitle.startsWith("@")) {
+            cardTitle = cardTitle.slice(1)
+          }
           return (
             <CardMentionLink
               cardId={cardId}
