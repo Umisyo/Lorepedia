@@ -58,4 +58,64 @@ describe("MarkdownRenderer", () => {
       "Subtitle"
     )
   })
+
+  describe("カードメンション", () => {
+    it("カードメンションをリンクとしてレンダリングできる", () => {
+      render(
+        <MarkdownRenderer
+          content="@[テストカード](card:card-123)"
+          projectId="project-456"
+        />
+      )
+      const link = screen.getByRole("link", { name: "テストカード" })
+      expect(link).toHaveAttribute(
+        "href",
+        "/projects/project-456/cards/card-123"
+      )
+    })
+
+    it("カードメンションに@プレフィックスが表示されない", () => {
+      render(
+        <MarkdownRenderer
+          content="@[テストカード](card:card-123)"
+          projectId="project-456"
+        />
+      )
+      expect(screen.queryByText("@テストカード")).not.toBeInTheDocument()
+      expect(screen.getByText("テストカード")).toBeInTheDocument()
+    })
+
+    it("projectIdがない場合はspanとしてレンダリングされる", () => {
+      const { container } = render(
+        <MarkdownRenderer content="@[テストカード](card:card-123)" />
+      )
+      expect(container.querySelector(".card-mention")?.tagName).toBe("SPAN")
+    })
+
+    it("複数のカードメンションを正しくレンダリングできる", () => {
+      render(
+        <MarkdownRenderer
+          content="@[カード1](card:id-1)と@[カード2](card:id-2)があります"
+          projectId="project-456"
+        />
+      )
+      expect(
+        screen.getByRole("link", { name: "カード1" })
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("link", { name: "カード2" })
+      ).toBeInTheDocument()
+    })
+
+    it("通常のリンクは影響を受けない", () => {
+      render(
+        <MarkdownRenderer
+          content="[外部リンク](https://example.com)"
+          projectId="project-456"
+        />
+      )
+      const link = screen.getByRole("link", { name: "外部リンク" })
+      expect(link).toHaveAttribute("href", "https://example.com")
+    })
+  })
 })
