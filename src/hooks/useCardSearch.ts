@@ -30,7 +30,9 @@ export function useCardSearch({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
+  // リクエストIDで古いリクエストの結果を無視する
+  const requestIdRef = useRef(0)
+  const isMountedRef = useRef(true)
 
   const search = useCallback(
     (query: string) => {
@@ -49,19 +51,16 @@ export function useCardSearch({
 
       // デバウンス
       timeoutRef.current = setTimeout(async () => {
-        // 前回のリクエストをキャンセル
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort()
-        }
-        abortControllerRef.current = new AbortController()
+        // リクエストIDをインクリメント（古いリクエストの結果を無視するため）
+        const currentRequestId = ++requestIdRef.current
 
         setIsLoading(true)
         setError(null)
 
         const result = await searchCardsForMention(projectId, query.trim())
 
-        // コンポーネントがアンマウントされていたら結果を無視
-        if (abortControllerRef.current?.signal.aborted) {
+        // アンマウント済み、または古いリクエストの場合は結果を無視
+        if (!isMountedRef.current || currentRequestId !== requestIdRef.current) {
           return
         }
 
@@ -88,12 +87,11 @@ export function useCardSearch({
 
   // クリーンアップ
   useEffect(() => {
+    isMountedRef.current = true
     return () => {
+      isMountedRef.current = false
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
-      }
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
       }
     }
   }, [])

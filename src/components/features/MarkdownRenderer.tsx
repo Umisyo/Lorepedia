@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback } from "react"
+import React, { useMemo, useCallback } from "react"
 import ReactMarkdown from "react-markdown"
 import rehypeSanitize from "rehype-sanitize"
 import rehypeHighlight from "rehype-highlight"
@@ -61,11 +61,12 @@ function CardMentionLink({
 }
 
 /**
- * Markdownコンテンツ内のカードメンションを処理
+ * 文字列内のカードメンションを処理してReactノードに変換
  */
-function processCardMentions(
-  content: string,
-  projectId?: string
+function processCardMentionsInText(
+  text: string,
+  projectId?: string,
+  keyPrefix = ""
 ): React.ReactNode[] {
   const parts: React.ReactNode[] = []
   let lastIndex = 0
@@ -74,17 +75,17 @@ function processCardMentions(
   // 毎回新しい正規表現を作成（lastIndex問題を回避）
   const pattern = createCardMentionPattern()
 
-  while ((match = pattern.exec(content)) !== null) {
+  while ((match = pattern.exec(text)) !== null) {
     // メンションの前のテキスト
     if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index))
+      parts.push(text.slice(lastIndex, match.index))
     }
 
     // カードメンションリンク
     const [, cardTitle, cardId] = match
     parts.push(
       <CardMentionLink
-        key={`${cardId}-${match.index}`}
+        key={`${keyPrefix}${cardId}-${match.index}`}
         cardId={cardId}
         cardTitle={cardTitle}
         projectId={projectId}
@@ -95,11 +96,50 @@ function processCardMentions(
   }
 
   // 残りのテキスト
-  if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex))
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
   }
 
   return parts
+}
+
+/**
+ * React子要素を再帰的に処理してカードメンションを変換
+ */
+function processChildren(
+  children: React.ReactNode,
+  projectId?: string,
+  keyPrefix = ""
+): React.ReactNode {
+  // 文字列の場合はカードメンションを処理
+  if (typeof children === "string") {
+    if (hasCardMentionsInContent(children)) {
+      return processCardMentionsInText(children, projectId, keyPrefix)
+    }
+    return children
+  }
+
+  // 配列の場合は各要素を再帰的に処理
+  if (Array.isArray(children)) {
+    return children.map((child, index) =>
+      processChildren(child, projectId, `${keyPrefix}${index}-`)
+    )
+  }
+
+  // React要素の場合は子要素を再帰的に処理
+  if (React.isValidElement(children)) {
+    const childrenProp = (children.props as { children?: React.ReactNode }).children
+    if (childrenProp !== undefined) {
+      return React.cloneElement(
+        children,
+        { ...children.props },
+        processChildren(childrenProp, projectId, `${keyPrefix}child-`)
+      )
+    }
+  }
+
+  // その他の場合はそのまま返す
+  return children
 }
 
 /**
@@ -112,32 +152,40 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
   // カードメンションを含む場合はカスタム処理
   const hasCardMentions = hasCardMentionsInContent(content)
 
-  // カードメンション処理関数をメモ化
-  const processMentions = useCallback(
-    (text: string) => processCardMentions(text, projectId),
+  // 子要素を再帰的に処理してカードメンションを変換する関数をメモ化
+  const processChildrenWithMentions = useCallback(
+    (children: React.ReactNode, keyPrefix = "") =>
+      processChildren(children, projectId, keyPrefix),
     [projectId]
   )
 
   // カスタムコンポーネントをメモ化（不要な再レンダリングを防ぐ）
   const customComponents = useMemo(
     () => ({
-      // カスタムコンポーネントでカードメンションを処理
-      p: ({ children }: { children?: React.ReactNode }) => {
-        // 子要素がテキストの場合はカードメンションを処理
-        if (typeof children === "string") {
-          return <p>{processMentions(children)}</p>
-        }
-        return <p>{children}</p>
-      },
+      // カスタムコンポーネントでカードメンションを処理（子要素を再帰的に処理）
+      p: ({ children }: { children?: React.ReactNode }) => (
+        <p>{processChildrenWithMentions(children, "p-")}</p>
+      ),
       // 他のブロック要素でも同様に処理
-      li: ({ children }: { children?: React.ReactNode }) => {
-        if (typeof children === "string") {
-          return <li>{processMentions(children)}</li>
-        }
-        return <li>{children}</li>
-      },
+      li: ({ children }: { children?: React.ReactNode }) => (
+        <li>{processChildrenWithMentions(children, "li-")}</li>
+      ),
+      // 見出し要素も処理
+      h1: ({ children }: { children?: React.ReactNode }) => (
+        <h1>{processChildrenWithMentions(children, "h1-")}</h1>
+      ),
+      h2: ({ children }: { children?: React.ReactNode }) => (
+        <h2>{processChildrenWithMentions(children, "h2-")}</h2>
+      ),
+      h3: ({ children }: { children?: React.ReactNode }) => (
+        <h3>{processChildrenWithMentions(children, "h3-")}</h3>
+      ),
+      // 引用も処理
+      blockquote: ({ children }: { children?: React.ReactNode }) => (
+        <blockquote>{processChildrenWithMentions(children, "bq-")}</blockquote>
+      ),
     }),
-    [processMentions]
+    [processChildrenWithMentions]
   )
 
   // proseクラス設定
