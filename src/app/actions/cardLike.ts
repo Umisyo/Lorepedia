@@ -78,6 +78,7 @@ export async function toggleCardLike(
   }
 
   revalidatePath(`/projects/${projectId}`)
+  revalidatePath(`/projects/${projectId}/cards`)
   revalidatePath(`/projects/${projectId}/cards/${cardId}`)
 
   return {
