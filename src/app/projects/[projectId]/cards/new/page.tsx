@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react"
 
 import { createClient } from "@/utils/supabase/server"
 import { getProject } from "@/app/actions/loreCard"
+import { getProjectTags } from "@/app/actions/tag"
 import { LoreCardForm } from "@/components/features/LoreCardForm"
 
 type Props = {
@@ -28,6 +29,10 @@ export default async function NewCardPage({ params }: Props) {
     redirect("/dashboard")
   }
 
+  // タグ一覧取得
+  const tagsResult = await getProjectTags(projectId)
+  const availableTags = tagsResult.success ? tagsResult.data ?? [] : []
+
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8">
       {/* ヘッダー */}
@@ -46,7 +51,7 @@ export default async function NewCardPage({ params }: Props) {
       </div>
 
       {/* フォーム */}
-      <LoreCardForm projectId={projectId} />
+      <LoreCardForm projectId={projectId} availableTags={availableTags} />
     </div>
   )
 }
