@@ -18,14 +18,24 @@ export type GetProjectMembersResult = {
 // プロファイル型ガード
 function isProfile(value: unknown): value is Profile {
   if (typeof value !== "object" || value === null) return false
-  const obj = value as Record<string, unknown>
+  // nullチェック後のオブジェクトに対してプロパティアクセス
+  const obj = value as { [key: string]: unknown }
   return (
-    typeof obj.id === "string" &&
-    (typeof obj.display_name === "string" || obj.display_name === null) &&
-    (typeof obj.avatar_url === "string" || obj.avatar_url === null) &&
-    typeof obj.created_at === "string" &&
-    typeof obj.updated_at === "string"
+    typeof obj["id"] === "string" &&
+    (typeof obj["display_name"] === "string" || obj["display_name"] === null) &&
+    (typeof obj["avatar_url"] === "string" || obj["avatar_url"] === null) &&
+    typeof obj["created_at"] === "string" &&
+    typeof obj["updated_at"] === "string"
   )
+}
+
+// プロファイル抽出ヘルパー（型ガード検証済みの値から安全に抽出）
+function extractProfile(value: unknown): Profile | null {
+  const profile = Array.isArray(value) ? value[0] : value
+  if (isProfile(profile)) {
+    return profile
+  }
+  return null
 }
 
 // メンバーロール型ガード
@@ -75,23 +85,20 @@ export async function getProjectMembers(
       return { success: false, error: "メンバー一覧の取得に失敗しました" }
     }
 
-    // 型変換（型ガードを使用）
-    const membersWithProfile: ProjectMemberWithProfile[] = (members ?? [])
-      .filter((m) => {
-        // profileが配列の場合は最初の要素を取得、単一オブジェクトの場合はそのまま
-        const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
-        return isProfile(profile) && isMemberRole(m.role)
-      })
-      .map((m) => {
-        const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
-        return {
+    // 型変換（型ガードを使用してアサーションを回避）
+    const membersWithProfile: ProjectMemberWithProfile[] = []
+    for (const m of members ?? []) {
+      const profile = extractProfile(m.profile)
+      if (profile && isMemberRole(m.role)) {
+        membersWithProfile.push({
           project_id: m.project_id,
           user_id: m.user_id,
-          role: m.role as MemberRole,
+          role: m.role,
           joined_at: m.joined_at,
-          profile: profile as Profile,
-        }
-      })
+          profile,
+        })
+      }
+    }
 
     return { success: true, members: membersWithProfile }
   } catch (error) {
@@ -146,12 +153,13 @@ export async function inviteMember(
     }
 
     // メンバー追加（editor権限）
+    const editorRole: MemberRole = "editor"
     const { error: insertError } = await supabase
       .from("project_members")
       .insert({
         project_id: projectId,
         user_id: userId,
-        role: "editor" as MemberRole,
+        role: editorRole,
       })
 
     if (insertError) {

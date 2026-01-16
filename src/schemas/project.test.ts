@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { createProjectSchema } from "./project"
+import { createProjectSchema, updateProjectSchema } from "./project"
 
 describe("createProjectSchema", () => {
   describe("正常系", () => {
@@ -216,6 +216,85 @@ describe("createProjectSchema", () => {
       const result = createProjectSchema.safeParse(data)
 
       expect(result.success).toBe(false)
+    })
+  })
+})
+
+describe("updateProjectSchema", () => {
+  describe("正常系", () => {
+    it("有効なデータがパースされる", () => {
+      const validData = {
+        name: "更新後プロジェクト",
+        description: "更新後の説明",
+        isPublicEditable: true,
+        tags: ["更新タグ"],
+      }
+
+      const result = updateProjectSchema.safeParse(validData)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.name).toBe("更新後プロジェクト")
+        expect(result.data.description).toBe("更新後の説明")
+        expect(result.data.isPublicEditable).toBe(true)
+        expect(result.data.tags).toEqual(["更新タグ"])
+      }
+    })
+
+    it("名前と説明の前後の空白がトリムされる", () => {
+      const data = {
+        name: "  プロジェクト名  ",
+        description: "  説明テキスト  ",
+        isPublicEditable: false,
+        tags: ["  タグ  "],
+      }
+
+      const result = updateProjectSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.name).toBe("プロジェクト名")
+        expect(result.data.description).toBe("説明テキスト")
+        expect(result.data.tags).toEqual(["タグ"])
+      }
+    })
+  })
+
+  describe("異常系", () => {
+    it("名前が空の場合エラー", () => {
+      const data = {
+        name: "",
+        description: "",
+        isPublicEditable: false,
+        tags: [],
+      }
+
+      const result = updateProjectSchema.safeParse(data)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "プロジェクト名を入力してください"
+        )
+      }
+    })
+
+    it("タグが6個以上の場合エラー", () => {
+      const data = {
+        name: "プロジェクト名",
+        description: "",
+        isPublicEditable: false,
+        tags: ["1", "2", "3", "4", "5", "6"],
+      }
+
+      const result = updateProjectSchema.safeParse(data)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "タグは最大5個まで設定できます"
+        )
+      }
     })
   })
 })

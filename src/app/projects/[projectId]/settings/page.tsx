@@ -15,6 +15,11 @@ type Props = {
   params: Promise<{ projectId: string }>
 }
 
+// メンバーロール型ガード
+function isMemberRole(value: unknown): value is MemberRole {
+  return value === "owner" || value === "editor" || value === "viewer"
+}
+
 export default async function ProjectSettingsPage({ params }: Props) {
   const { projectId } = await params
   const supabase = await createClient()
@@ -45,12 +50,14 @@ export default async function ProjectSettingsPage({ params }: Props) {
   const members = membersResult.success ? membersResult.members ?? [] : []
   const role = roleResult.data
 
-  // editor以上でなければリダイレクト
-  if (role !== "owner" && role !== "editor") {
+  // ロールの型検証とeditor以上でなければリダイレクト
+  if (!isMemberRole(role) || (role !== "owner" && role !== "editor")) {
     redirect(`/projects/${projectId}`)
   }
 
-  const isOwner = role === "owner"
+  // この時点でroleは"owner"または"editor"に絞り込まれている
+  const validRole: MemberRole = role
+  const isOwner = validRole === "owner"
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -113,7 +120,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
               projectId={projectId}
               currentUserId={user.id}
               isPublicEditable={project.is_public_editable}
-              myRole={role as MemberRole}
+              myRole={validRole}
               initialMembers={members}
             />
           </div>
