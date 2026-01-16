@@ -2,7 +2,10 @@
 
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
-import type { CreateLoreCardFormData } from "@/schemas/loreCard"
+import type {
+  CreateLoreCardFormData,
+  EditLoreCardFormData,
+} from "@/schemas/loreCard"
 import {
   isTag,
   isAuthor,
@@ -298,6 +301,64 @@ export async function createLoreCard(
   revalidatePath(`/projects/${projectId}/cards`)
 
   return { success: true, data: { id: card.id } }
+}
+
+// カード更新
+export async function updateLoreCard(
+  projectId: string,
+  cardId: string,
+  formData: EditLoreCardFormData
+): Promise<LoreCardActionResult<{ id: string }>> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: "ログインが必要です" }
+  }
+
+  // プロジェクトメンバーシップを確認（editor以上）
+  const { data: isEditor } = await supabase.rpc("is_project_editor", {
+    p_project_id: projectId,
+  })
+
+  if (!isEditor) {
+    return { success: false, error: "カードを編集する権限がありません" }
+  }
+
+  // カード存在確認（プロジェクトIDでスコープ）
+  const { data: existingCard, error: fetchError } = await supabase
+    .from("lore_cards")
+    .select("id")
+    .eq("id", cardId)
+    .eq("project_id", projectId)
+    .single()
+
+  if (fetchError || !existingCard) {
+    return { success: false, error: "カードが見つかりません" }
+  }
+
+  // カード更新
+  const { error: updateError } = await supabase
+    .from("lore_cards")
+    .update({
+      title: formData.title,
+      content: formData.content,
+    })
+    .eq("id", cardId)
+    .eq("project_id", projectId)
+
+  if (updateError) {
+    console.error("Failed to update lore card:", updateError)
+    return { success: false, error: "カードの更新に失敗しました" }
+  }
+
+  revalidatePath(`/projects/${projectId}/cards/${cardId}`)
+  revalidatePath(`/projects/${projectId}/cards`)
+  revalidatePath(`/projects/${projectId}`)
+
+  return { success: true, data: { id: cardId } }
 }
 
 // プロジェクト情報取得（ヘッダー表示用）

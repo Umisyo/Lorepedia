@@ -19,40 +19,73 @@ import {
 } from "@/components/ui/form"
 import {
   createLoreCardSchema,
+  editLoreCardSchema,
   type CreateLoreCardFormData,
+  type EditLoreCardFormData,
 } from "@/schemas/loreCard"
-import { createLoreCard } from "@/app/actions/loreCard"
+import { createLoreCard, updateLoreCard } from "@/app/actions/loreCard"
 
 type Props = {
   projectId: string
+  mode?: "create" | "edit"
+  cardId?: string
+  defaultValues?: {
+    title: string
+    content: string
+  }
 }
 
-export function LoreCardForm({ projectId }: Props) {
+export function LoreCardForm({
+  projectId,
+  mode = "create",
+  cardId,
+  defaultValues,
+}: Props) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
-  const form = useForm<CreateLoreCardFormData>({
-    resolver: zodResolver(createLoreCardSchema),
-    defaultValues: {
+  const isEditMode = mode === "edit"
+  const schema = isEditMode ? editLoreCardSchema : createLoreCardSchema
+
+  const form = useForm<CreateLoreCardFormData | EditLoreCardFormData>({
+    resolver: zodResolver(schema),
+    defaultValues: defaultValues ?? {
       title: "",
       content: "",
     },
   })
 
-  async function onSubmit(data: CreateLoreCardFormData) {
+  async function onSubmit(data: CreateLoreCardFormData | EditLoreCardFormData) {
     setIsSubmitting(true)
     setFormError(null)
 
-    const result = await createLoreCard(projectId, data)
-
-    if (result.success && result.data) {
-      router.push(`/projects/${projectId}/cards/${result.data.id}`)
+    if (isEditMode && cardId) {
+      const result = await updateLoreCard(projectId, cardId, data)
+      if (result.success && result.data) {
+        router.push(`/projects/${projectId}/cards/${result.data.id}`)
+      } else {
+        setFormError(result.error || "カードの更新に失敗しました")
+        setIsSubmitting(false)
+      }
     } else {
-      setFormError(result.error || "カードの作成に失敗しました")
-      setIsSubmitting(false)
+      const result = await createLoreCard(projectId, data)
+      if (result.success && result.data) {
+        router.push(`/projects/${projectId}/cards/${result.data.id}`)
+      } else {
+        setFormError(result.error || "カードの作成に失敗しました")
+        setIsSubmitting(false)
+      }
     }
   }
+
+  const submitButtonText = isEditMode
+    ? isSubmitting
+      ? "更新中..."
+      : "カードを更新"
+    : isSubmitting
+      ? "作成中..."
+      : "カードを作成"
 
   return (
     <Form {...form}>
@@ -108,7 +141,7 @@ export function LoreCardForm({ projectId }: Props) {
         {/* 送信ボタン */}
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "作成中..." : "カードを作成"}
+            {submitButtonText}
           </Button>
           <Button
             type="button"
