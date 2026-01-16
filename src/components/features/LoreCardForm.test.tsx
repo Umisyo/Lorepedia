@@ -24,6 +24,29 @@ vi.mock("@/app/actions/tag", () => ({
   updateCardTags: vi.fn(),
 }))
 
+// RichTextEditorをモック（プレースホルダーでの検索を可能にする）
+vi.mock("@/components/features/editor", () => ({
+  RichTextEditor: ({
+    content,
+    onChange,
+    placeholder,
+    disabled,
+  }: {
+    content?: string
+    onChange?: (value: string) => void
+    placeholder?: string
+    disabled?: boolean
+  }) => (
+    <textarea
+      data-testid="rich-text-editor"
+      placeholder={placeholder}
+      value={content}
+      onChange={(e) => onChange?.(e.target.value)}
+      disabled={disabled}
+    />
+  ),
+}))
+
 // Server Action をインポートしてモック関数として使用
 import { createLoreCard, updateLoreCard } from "@/app/actions/loreCard"
 import { updateCardTags } from "@/app/actions/tag"
@@ -43,7 +66,8 @@ describe("LoreCardForm", () => {
       render(<LoreCardForm projectId="project-1" />)
 
       expect(screen.getByLabelText(/タイトル/)).toBeInTheDocument()
-      expect(screen.getByLabelText(/詳細/)).toBeInTheDocument()
+      // RichTextEditorはモック化されているため、data-testidで確認
+      expect(screen.getByTestId("rich-text-editor")).toBeInTheDocument()
       expect(
         screen.getByRole("button", { name: "カードを作成" })
       ).toBeInTheDocument()
@@ -66,7 +90,8 @@ describe("LoreCardForm", () => {
       )
 
       expect(screen.getByLabelText(/タイトル/)).toBeInTheDocument()
-      expect(screen.getByLabelText(/詳細/)).toBeInTheDocument()
+      // RichTextEditorはモック化されているため、data-testidで確認
+      expect(screen.getByTestId("rich-text-editor")).toBeInTheDocument()
       expect(
         screen.getByRole("button", { name: "カードを更新" })
       ).toBeInTheDocument()
