@@ -28,15 +28,8 @@ export function CardFilterBar({ tags }: Props) {
   // 検索入力のローカル状態（即時反映用）
   const [localSearch, setLocalSearch] = useState(filters.search)
 
-  // デバウンス処理（300ms後にURL更新）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (localSearch !== filters.search) {
-        setFilters({ search: localSearch })
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [localSearch, filters.search, setFilters])
+  // IME変換中フラグ
+  const [isComposing, setIsComposing] = useState(false)
 
   // URL変更時にローカル状態を同期（外部からURLが変更された場合のみ）
   useEffect(() => {
@@ -53,6 +46,26 @@ export function CardFilterBar({ tags }: Props) {
     },
     []
   )
+
+  // Enterキー押下で検索実行
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !isComposing) {
+        e.preventDefault()
+        setFilters({ search: localSearch })
+      }
+    },
+    [isComposing, localSearch, setFilters]
+  )
+
+  // IME変換状態管理
+  const handleCompositionStart = useCallback(() => setIsComposing(true), [])
+  const handleCompositionEnd = useCallback(() => setIsComposing(false), [])
+
+  // 検索ボタン用
+  const handleSearchSubmit = useCallback(() => {
+    setFilters({ search: localSearch })
+  }, [localSearch, setFilters])
 
   // タグフィルタ変更
   const handleTagsChange = useCallback(
@@ -90,16 +103,31 @@ export function CardFilterBar({ tags }: Props) {
       {/* 左側: 検索 + タグフィルタ */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {/* 検索入力 */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="カードを検索..."
-            value={localSearch}
-            onChange={handleSearchChange}
+        <div className="flex w-full gap-2 sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="カードを検索..."
+              value={localSearch}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
+              disabled={isPending}
+              className="pl-10"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            onClick={handleSearchSubmit}
             disabled={isPending}
-            className="pl-10"
-          />
+            aria-label="検索"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* タグフィルタ */}

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, fireEvent, act } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen, fireEvent } from "@testing-library/react"
 import { CardFilterBar } from "./CardFilterBar"
 import type { Tag } from "@/types/loreCard"
 
@@ -49,11 +49,6 @@ const mockTags: Tag[] = [
 describe("CardFilterBar", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
   })
 
   it("フィルタバーがレンダリングされる", () => {
@@ -70,21 +65,64 @@ describe("CardFilterBar", () => {
     expect(screen.getByRole("tablist")).toBeInTheDocument()
   })
 
-  it("検索入力で値を変更するとデバウンス後にsetFiltersが呼ばれる", async () => {
+  it("Enterキー押下で検索が実行される", () => {
     render(<CardFilterBar tags={mockTags} />)
 
     const searchInput = screen.getByPlaceholderText("カードを検索...")
     fireEvent.change(searchInput, { target: { value: "テスト検索" } })
 
-    // デバウンス中はまだ呼ばれていない
-    expect(mockSetFilters).not.toHaveBeenCalled()
-
-    // 300ms経過後に呼ばれる
-    await act(async () => {
-      vi.advanceTimersByTime(300)
-    })
+    // Enterキーを押す
+    fireEvent.keyDown(searchInput, { key: "Enter" })
 
     expect(mockSetFilters).toHaveBeenCalledWith({ search: "テスト検索" })
+  })
+
+  it("IME変換中はEnterキーで検索が実行されない", () => {
+    render(<CardFilterBar tags={mockTags} />)
+
+    const searchInput = screen.getByPlaceholderText("カードを検索...")
+    fireEvent.change(searchInput, { target: { value: "テスト" } })
+
+    // IME変換開始
+    fireEvent.compositionStart(searchInput)
+
+    // Enterキーを押す（変換確定を意図）
+    fireEvent.keyDown(searchInput, { key: "Enter" })
+
+    // IME変換中なので検索は実行されない
+    expect(mockSetFilters).not.toHaveBeenCalled()
+
+    // IME変換終了
+    fireEvent.compositionEnd(searchInput)
+
+    // 変換終了後にEnterキーを押す
+    fireEvent.keyDown(searchInput, { key: "Enter" })
+
+    // 今度は検索が実行される
+    expect(mockSetFilters).toHaveBeenCalledWith({ search: "テスト" })
+  })
+
+  it("検索ボタンクリックで検索が実行される", () => {
+    render(<CardFilterBar tags={mockTags} />)
+
+    const searchInput = screen.getByPlaceholderText("カードを検索...")
+    fireEvent.change(searchInput, { target: { value: "ボタン検索" } })
+
+    // 検索ボタンをクリック
+    const searchButton = screen.getByRole("button", { name: "検索" })
+    fireEvent.click(searchButton)
+
+    expect(mockSetFilters).toHaveBeenCalledWith({ search: "ボタン検索" })
+  })
+
+  it("検索入力の変更だけでは検索が実行されない", () => {
+    render(<CardFilterBar tags={mockTags} />)
+
+    const searchInput = screen.getByPlaceholderText("カードを検索...")
+    fireEvent.change(searchInput, { target: { value: "入力のみ" } })
+
+    // 入力だけでは検索は実行されない
+    expect(mockSetFilters).not.toHaveBeenCalled()
   })
 
   it("ソート順トグルボタンをクリックするとsetFiltersが呼ばれる", () => {
