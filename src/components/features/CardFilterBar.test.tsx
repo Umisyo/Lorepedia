@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { render, screen, fireEvent, act } from "@testing-library/react"
 import { CardFilterBar } from "./CardFilterBar"
 import type { Tag } from "@/types/loreCard"
 
@@ -49,6 +49,11 @@ const mockTags: Tag[] = [
 describe("CardFilterBar", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("フィルタバーがレンダリングされる", () => {
@@ -65,11 +70,19 @@ describe("CardFilterBar", () => {
     expect(screen.getByRole("tablist")).toBeInTheDocument()
   })
 
-  it("検索入力で値を変更するとsetFiltersが呼ばれる", () => {
+  it("検索入力で値を変更するとデバウンス後にsetFiltersが呼ばれる", async () => {
     render(<CardFilterBar tags={mockTags} />)
 
     const searchInput = screen.getByPlaceholderText("カードを検索...")
     fireEvent.change(searchInput, { target: { value: "テスト検索" } })
+
+    // デバウンス中はまだ呼ばれていない
+    expect(mockSetFilters).not.toHaveBeenCalled()
+
+    // 300ms経過後に呼ばれる
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
 
     expect(mockSetFilters).toHaveBeenCalledWith({ search: "テスト検索" })
   })
