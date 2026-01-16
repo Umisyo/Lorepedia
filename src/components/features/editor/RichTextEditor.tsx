@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback, useRef } from "react"
+import { useMemo, useCallback, useRef, useState } from "react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Link from "@tiptap/extension-link"
@@ -17,6 +17,8 @@ import { createCardMentionSuggestion } from "./extensions/cardMentionSuggestion"
 import { cn } from "@/lib/utils"
 import { htmlToMarkdown, prepareContentForEditor } from "@/lib/editor/markdown"
 import { useCardSearch } from "@/hooks/useCardSearch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { MarkdownRenderer } from "@/components/features/MarkdownRenderer"
 import type { CardMentionSuggestion } from "@/app/actions/loreCard"
 
 // シンタックスハイライト用のlowlightインスタンス
@@ -39,6 +41,11 @@ export function RichTextEditor({
   className,
   projectId,
 }: Props) {
+  // タブ状態管理
+  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
+  // プレビュー用のMarkdownコンテンツ
+  const [currentMarkdown, setCurrentMarkdown] = useState(content)
+
   // Markdownコンテンツをエディタ用のHTMLに変換（初回のみ）
   const initialContent = useMemo(
     () => prepareContentForEditor(content),
@@ -156,6 +163,7 @@ export function RichTextEditor({
       // HTMLをMarkdownに変換して出力
       const html = editor.getHTML()
       const markdown = htmlToMarkdown(html)
+      setCurrentMarkdown(markdown)
       onChange?.(markdown)
     },
   })
@@ -171,15 +179,41 @@ export function RichTextEditor({
         className
       )}
     >
-      <EditorToolbar editor={editor} />
-      <div className="relative">
-        {isEmpty && (
-          <div className="pointer-events-none absolute left-4 top-4 text-muted-foreground">
-            {placeholder}
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as "edit" | "preview")}
+      >
+        <div className="flex items-center justify-between border-b px-2 py-1">
+          <TabsList className="h-8">
+            <TabsTrigger value="edit" className="text-sm">
+              編集
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="text-sm">
+              プレビュー
+            </TabsTrigger>
+          </TabsList>
+          {activeTab === "edit" && <EditorToolbar editor={editor} />}
+        </div>
+        <TabsContent value="edit" className="mt-0">
+          <div className="relative">
+            {isEmpty && (
+              <div className="pointer-events-none absolute left-4 top-4 text-muted-foreground">
+                {placeholder}
+              </div>
+            )}
+            <EditorContent editor={editor} />
           </div>
-        )}
-        <EditorContent editor={editor} />
-      </div>
+        </TabsContent>
+        <TabsContent value="preview" className="mt-0">
+          <div className="min-h-[300px] p-4">
+            {currentMarkdown ? (
+              <MarkdownRenderer content={currentMarkdown} projectId={projectId} />
+            ) : (
+              <p className="text-muted-foreground">{placeholder}</p>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
