@@ -18,14 +18,25 @@ export type GetProjectMembersResult = {
 // プロファイル型ガード
 function isProfile(value: unknown): value is Profile {
   if (typeof value !== "object" || value === null) return false
-  // nullチェック後のオブジェクトに対してプロパティアクセス
-  const obj = value as { [key: string]: unknown }
+
+  // in演算子で必要なプロパティの存在を確認
+  if (
+    !("id" in value) ||
+    !("display_name" in value) ||
+    !("avatar_url" in value) ||
+    !("created_at" in value) ||
+    !("updated_at" in value)
+  ) {
+    return false
+  }
+
+  // この時点でvalueは必要なプロパティを持つオブジェクト
   return (
-    typeof obj["id"] === "string" &&
-    (typeof obj["display_name"] === "string" || obj["display_name"] === null) &&
-    (typeof obj["avatar_url"] === "string" || obj["avatar_url"] === null) &&
-    typeof obj["created_at"] === "string" &&
-    typeof obj["updated_at"] === "string"
+    typeof value.id === "string" &&
+    (typeof value.display_name === "string" || value.display_name === null) &&
+    (typeof value.avatar_url === "string" || value.avatar_url === null) &&
+    typeof value.created_at === "string" &&
+    typeof value.updated_at === "string"
   )
 }
 
