@@ -89,7 +89,7 @@ export function MemberItem({
             )}
           </span>
           <span className="text-sm text-muted-foreground">
-            {roleLabels[member.role as MemberRole]}
+            {roleLabels[member.role]}
           </span>
         </div>
       </div>

@@ -51,9 +51,11 @@ export function UserSearchInput({
   // 外部クリックで閉じる
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const target = event.target
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        target instanceof Node &&
+        !containerRef.current.contains(target)
       ) {
         setShowResults(false)
       }
