@@ -98,6 +98,18 @@ export function htmlToMarkdown(html: string): string {
 }
 
 /**
+ * HTML特殊文字をエスケープ（XSS対策）
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
+/**
  * カードメンション記法をHTMLに変換
  * @[カード名](card:カードID) → <span data-type="mention" data-id="ID" data-label="名前">@カード名</span>
  */
@@ -105,7 +117,10 @@ function convertCardMentionsToHtml(markdown: string): string {
   // @[カード名](card:カードID) のパターンにマッチ
   const mentionPattern = /@\[([^\]]+)\]\(card:([^)]+)\)/g
   return markdown.replace(mentionPattern, (_match, title, id) => {
-    return `<span data-type="mention" data-id="${id}" data-label="${title}" class="card-mention">@${title}</span>`
+    // XSS対策: 属性値とテキストをエスケープ
+    const safeId = escapeHtml(id)
+    const safeTitle = escapeHtml(title)
+    return `<span data-type="mention" data-id="${safeId}" data-label="${safeTitle}" class="card-mention">@${safeTitle}</span>`
   })
 }
 

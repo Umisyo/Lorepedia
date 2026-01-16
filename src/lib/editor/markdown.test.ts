@@ -106,6 +106,32 @@ describe("markdown変換ユーティリティ", () => {
       expect(html).toContain('data-id="card-123"')
       expect(html).toContain('data-label="Test Card"')
     })
+
+    it("カードメンションのXSS対策ができている", () => {
+      // 特殊文字を含むカード名（IDはUUID形式を想定）
+      const xssTitle = '<script>alert("xss")</script>'
+      const cardId = "test-card-123"
+      const markdown = `@[${xssTitle}](card:${cardId})`
+      const html = markdownToHtml(markdown)
+      // data-label属性内のスクリプトタグがエスケープされていること
+      expect(html).toContain('data-label="&lt;script&gt;')
+      expect(html).toContain("&lt;/script&gt;")
+      // 表示テキスト部分もエスケープされていること
+      expect(html).toContain("@&lt;script&gt;")
+    })
+
+    it("特殊文字を含むカード名を正しくエスケープできる", () => {
+      // クォートや特殊記号を含むカード名
+      const title = 'Test "Card" & <Special>'
+      const markdown = `@[${title}](card:card-456)`
+      const html = markdownToHtml(markdown)
+      // クォートがエスケープされていること
+      expect(html).toContain("&quot;Card&quot;")
+      // アンパサンドがエスケープされていること
+      expect(html).toContain("&amp;")
+      // 山括弧がエスケープされていること
+      expect(html).toContain("&lt;Special&gt;")
+    })
   })
 
   describe("isHtmlContent", () => {
