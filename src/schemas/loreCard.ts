@@ -14,7 +14,7 @@ export const createLoreCardSchema = z.object({
 
 export type CreateLoreCardFormData = z.infer<typeof createLoreCardSchema>
 
-// カード更新スキーマ（Phase 2用）
+// カード更新スキーマ（部分更新用）
 export const updateLoreCardSchema = z.object({
   title: z
     .string()
@@ -29,3 +29,8 @@ export const updateLoreCardSchema = z.object({
 })
 
 export type UpdateLoreCardFormData = z.infer<typeof updateLoreCardSchema>
+
+// 編集フォーム用スキーマ（作成と同じバリデーション）
+export const editLoreCardSchema = createLoreCardSchema
+
+export type EditLoreCardFormData = z.infer<typeof editLoreCardSchema>
