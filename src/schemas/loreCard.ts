@@ -10,9 +10,13 @@ export const createLoreCardSchema = z.object({
     .string()
     .min(1, "詳細を入力してください")
     .max(50000, "詳細は50,000文字以内で入力してください"),
+  tagIds: z.array(z.string()).default([]),
 })
 
 export type CreateLoreCardFormData = z.infer<typeof createLoreCardSchema>
+
+// フォーム入力用の型（デフォルト値を持つフィールドはオプショナル）
+export type CreateLoreCardFormInput = z.input<typeof createLoreCardSchema>
 
 // カード更新スキーマ（部分更新用）
 export const updateLoreCardSchema = z.object({
@@ -26,6 +30,7 @@ export const updateLoreCardSchema = z.object({
     .min(1, "詳細を入力してください")
     .max(50000, "詳細は50,000文字以内で入力してください")
     .optional(),
+  tagIds: z.array(z.string()).optional(),
 })
 
 export type UpdateLoreCardFormData = z.infer<typeof updateLoreCardSchema>

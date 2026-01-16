@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/form"
 import {
   createLoreCardSchema,
-  editLoreCardSchema,
   type CreateLoreCardFormData,
-  type EditLoreCardFormData,
+  type CreateLoreCardFormInput,
 } from "@/schemas/loreCard"
 import { createLoreCard, updateLoreCard } from "@/app/actions/loreCard"
+import { updateCardTags } from "@/app/actions/tag"
+import { TagFilter } from "@/components/features/TagFilter"
+import type { Tag } from "@/types/loreCard"
 
 type Props = {
   projectId: string
@@ -32,7 +34,9 @@ type Props = {
   defaultValues?: {
     title: string
     content: string
+    tagIds?: string[]
   }
+  availableTags?: Tag[]
 }
 
 export function LoreCardForm({
@@ -40,29 +44,39 @@ export function LoreCardForm({
   mode = "create",
   cardId,
   defaultValues,
+  availableTags = [],
 }: Props) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
   const isEditMode = mode === "edit"
-  const schema = isEditMode ? editLoreCardSchema : createLoreCardSchema
 
-  const form = useForm<CreateLoreCardFormData | EditLoreCardFormData>({
-    resolver: zodResolver(schema),
+  // editLoreCardSchemaはcreateLoreCardSchemaと同じなので、一つに統一
+  // FormInputはZodのinput型（デフォルト値を持つフィールドはオプショナル）
+  const form = useForm<CreateLoreCardFormInput, unknown, CreateLoreCardFormData>({
+    resolver: zodResolver(createLoreCardSchema),
     defaultValues: defaultValues ?? {
       title: "",
       content: "",
+      tagIds: [],
     },
   })
 
-  async function onSubmit(data: CreateLoreCardFormData | EditLoreCardFormData) {
+  async function onSubmit(data: CreateLoreCardFormData) {
     setIsSubmitting(true)
     setFormError(null)
+
+    const tagIds = data.tagIds ?? []
 
     if (isEditMode && cardId) {
       const result = await updateLoreCard(projectId, cardId, data)
       if (result.success && result.data) {
+        // タグを更新
+        const tagResult = await updateCardTags(projectId, cardId, tagIds)
+        if (!tagResult.success) {
+          console.error("Failed to update tags:", tagResult.error)
+        }
         router.push(`/projects/${projectId}/cards/${result.data.id}`)
       } else {
         setFormError(result.error || "カードの更新に失敗しました")
@@ -71,6 +85,13 @@ export function LoreCardForm({
     } else {
       const result = await createLoreCard(projectId, data)
       if (result.success && result.data) {
+        // 新規作成時もタグを設定
+        if (tagIds.length > 0) {
+          const tagResult = await updateCardTags(projectId, result.data.id, tagIds)
+          if (!tagResult.success) {
+            console.error("Failed to set tags:", tagResult.error)
+          }
+        }
         router.push(`/projects/${projectId}/cards/${result.data.id}`)
       } else {
         setFormError(result.error || "カードの作成に失敗しました")
@@ -133,6 +154,27 @@ export function LoreCardForm({
                 />
               </FormControl>
               <FormDescription>Markdown記法が使用できます</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* タグ */}
+        <FormField
+          control={form.control}
+          name="tagIds"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>タグ</FormLabel>
+              <FormControl>
+                <TagFilter
+                  tags={availableTags}
+                  selectedIds={field.value ?? []}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
+                />
+              </FormControl>
+              <FormDescription>カードに関連するタグを選択</FormDescription>
               <FormMessage />
             </FormItem>
           )}
