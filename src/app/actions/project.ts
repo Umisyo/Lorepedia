@@ -219,8 +219,16 @@ export async function updateProject(
       return { success: false, error: "プロジェクトの更新に失敗しました" }
     }
 
-    // タグ更新（削除→再作成）
+    // タグ更新（アトミック: 失敗時は元のタグを復元）
     const warnings: string[] = []
+
+    // 既存タグを取得（復元用）
+    const { data: existingTags } = await supabase
+      .from("project_tags")
+      .select("name")
+      .eq("project_id", projectId)
+
+    const originalTags = existingTags?.map((t) => t.name) ?? []
 
     // 既存タグ削除
     const { error: deleteTagError } = await supabase
@@ -231,22 +239,32 @@ export async function updateProject(
     if (deleteTagError) {
       console.error("タグ削除エラー:", deleteTagError)
       warnings.push("タグの更新に一部失敗しました")
-    }
+    } else {
+      // 新規タグ作成
+      if (tags.length > 0) {
+        const tagRecords = tags.map((tag) => ({
+          project_id: projectId,
+          name: tag,
+        }))
 
-    // 新規タグ作成
-    if (tags.length > 0) {
-      const tagRecords = tags.map((tag) => ({
-        project_id: projectId,
-        name: tag,
-      }))
+        const { error: insertTagError } = await supabase
+          .from("project_tags")
+          .insert(tagRecords)
 
-      const { error: insertTagError } = await supabase
-        .from("project_tags")
-        .insert(tagRecords)
+        if (insertTagError) {
+          console.error("タグ作成エラー:", insertTagError)
 
-      if (insertTagError) {
-        console.error("タグ作成エラー:", insertTagError)
-        warnings.push("タグの作成に一部失敗しました")
+          // 挿入失敗時は元のタグを復元
+          if (originalTags.length > 0) {
+            const restoreRecords = originalTags.map((tag) => ({
+              project_id: projectId,
+              name: tag,
+            }))
+            await supabase.from("project_tags").insert(restoreRecords)
+          }
+
+          warnings.push("タグの更新に失敗したため、元のタグを復元しました")
+        }
       }
     }
 

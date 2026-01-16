@@ -141,14 +141,30 @@ export async function inviteMember(
   }
 
   try {
-    // 権限チェック（ownerのみ招待可能）
-    const { data: role } = await supabase.rpc("get_user_role", {
-      p_project_id: projectId,
-      p_user_id: user.id,
-    })
+    // 権限チェック（ownerのみ招待可能）とプロジェクト設定を並列取得
+    const [roleResult, projectResult] = await Promise.all([
+      supabase.rpc("get_user_role", {
+        p_project_id: projectId,
+        p_user_id: user.id,
+      }),
+      supabase
+        .from("projects")
+        .select("is_public_editable")
+        .eq("id", projectId)
+        .single(),
+    ])
 
-    if (role !== "owner") {
+    if (roleResult.data !== "owner") {
       return { success: false, error: "オーナーのみがメンバーを招待できます" }
+    }
+
+    // is_public_editableがtrueの場合は招待不可
+    if (projectResult.data?.is_public_editable) {
+      return {
+        success: false,
+        error:
+          "「誰でも編集可能」が有効なプロジェクトではメンバー招待できません",
+      }
     }
 
     // 既存メンバーチェック
