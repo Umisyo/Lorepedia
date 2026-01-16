@@ -10,14 +10,16 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { LikeButton } from "./LikeButton"
 import type { LoreCardWithTags } from "@/types/loreCard"
 
 type Props = {
   card: LoreCardWithTags
   projectId: string
+  isLoggedIn: boolean
 }
 
-export function LoreCardItem({ card, projectId }: Props) {
+export function LoreCardItem({ card, projectId, isLoggedIn }: Props) {
   const updatedAt = formatDistanceToNow(new Date(card.updated_at), {
     addSuffix: true,
     locale: ja,
@@ -57,7 +59,16 @@ export function LoreCardItem({ card, projectId }: Props) {
               )}
             </div>
           )}
-          <span className="text-xs text-muted-foreground">{updatedAt}</span>
+          <div className="flex w-full items-center justify-between">
+            <span className="text-xs text-muted-foreground">{updatedAt}</span>
+            <LikeButton
+              cardId={card.id}
+              projectId={projectId}
+              likeCount={card.likeCount}
+              isLiked={card.isLiked}
+              isLoggedIn={isLoggedIn}
+            />
+          </div>
         </CardFooter>
       </Card>
     </Link>

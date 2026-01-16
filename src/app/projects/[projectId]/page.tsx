@@ -122,6 +122,7 @@ export default async function ProjectDetailPage({
         cards={cardsData?.cards ?? []}
         projectId={projectId}
         viewMode={filters.viewMode as ViewMode}
+        isLoggedIn={!!user}
       />
 
       {/* ページネーション */}

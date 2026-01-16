@@ -93,6 +93,39 @@ export type Database = {
           },
         ]
       }
+      card_likes: {
+        Row: {
+          card_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          card_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          card_id?: string
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_likes_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "lore_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lore_cards: {
         Row: {
           author_id: string | null

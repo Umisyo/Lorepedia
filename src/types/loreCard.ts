@@ -17,6 +17,8 @@ export type Author = {
 // カード一覧用（タグ付き）
 export type LoreCardWithTags = LoreCard & {
   tags: Tag[]
+  likeCount: number
+  isLiked: boolean
 }
 
 // カード詳細用（タグ + 作成者付き）

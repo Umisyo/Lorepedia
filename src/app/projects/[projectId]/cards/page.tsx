@@ -61,7 +61,7 @@ export default async function CardsPage({ params }: Props) {
       </div>
 
       {/* カード一覧 */}
-      <LoreCardList cards={cards} projectId={projectId} />
+      <LoreCardList cards={cards} projectId={projectId} isLoggedIn={!!user} />
     </div>
   )
 }
