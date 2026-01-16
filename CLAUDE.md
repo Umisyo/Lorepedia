@@ -167,7 +167,7 @@ Worktree作成 → 実装 → (UI時: /frontend-verify + /rams) → Commit → P
 | 2 | 実装（1機能1コミット） | - |
 | 2.5 | UI実装時レビュー | `/frontend-verify`, `/rams` |
 | 3-5 | Commit → Push → PR | `/pr-create` |
-| 6 | セルフレビュー（最大3回） | `pr-self-review` エージェント |
+| 6 | セルフレビュー（最大3回） | `/codex` スキル |
 
 **Worktree操作**: `/worktree-create`, `/clean_gone` を使用
 
@@ -185,7 +185,7 @@ Worktree作成 → 実装 → (UI時: /frontend-verify + /rams) → Commit → P
 - [ ] コミットされている
 - [ ] リモートにPushされている
 - [ ] PRが作成されている（または直接マージの場合はマージ完了）
-- [ ] セルフレビューで🔴必須・🟡推奨の指摘がないこと（または3回修正済み）
+- [ ] `/codex` でセルフレビューを実行し、🔴必須・🟡推奨の指摘がないこと（または3回修正済み）
 
 ### タスク管理
 
