@@ -1,7 +1,7 @@
 import type { LoreCardWithTags, Author } from "./loreCard"
 
 // ソート対象カラム
-export type SortBy = "created_at" | "updated_at" | "title"
+export type SortBy = "created_at" | "updated_at" | "title" | "likes"
 
 // ソート順
 export type SortOrder = "asc" | "desc"

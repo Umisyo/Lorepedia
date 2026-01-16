@@ -3,14 +3,16 @@ import { formatDistanceToNow } from "date-fns"
 import { ja } from "date-fns/locale"
 
 import { Badge } from "@/components/ui/badge"
+import { LikeButton } from "./LikeButton"
 import type { LoreCardWithTags } from "@/types/loreCard"
 
 type Props = {
   card: LoreCardWithTags
   projectId: string
+  isLoggedIn: boolean
 }
 
-export function LoreCardListItem({ card, projectId }: Props) {
+export function LoreCardListItem({ card, projectId, isLoggedIn }: Props) {
   const updatedAt = formatDistanceToNow(new Date(card.updated_at), {
     addSuffix: true,
     locale: ja,
@@ -40,9 +42,18 @@ export function LoreCardListItem({ card, projectId }: Props) {
         )}
       </div>
 
-      {/* 更新日 */}
-      <div className="flex-shrink-0 text-sm text-muted-foreground">
-        {updatedAt}
+      {/* いいねボタンと更新日 */}
+      <div className="flex flex-shrink-0 items-center gap-3">
+        <LikeButton
+          cardId={card.id}
+          projectId={projectId}
+          likeCount={card.likeCount}
+          isLiked={card.isLiked}
+          isLoggedIn={isLoggedIn}
+        />
+        <span className="text-sm text-muted-foreground">
+          {updatedAt}
+        </span>
       </div>
     </Link>
   )

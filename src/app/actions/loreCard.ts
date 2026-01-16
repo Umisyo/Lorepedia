@@ -93,13 +93,85 @@ export async function getLoreCards(
     return { success: false, error: "カードの取得に失敗しました" }
   }
 
-  // タグをフラット化
-  const cardsWithTags: LoreCardWithTags[] = cards.map((card) => ({
-    ...card,
-    tags: extractTags(card.card_tags),
-  }))
+  // いいね情報を取得
+  const cardIds = cards.map((card) => card.id)
+  const likesInfo = await getCardLikesInfo(supabase, cardIds, user.id)
+
+  // タグをフラット化していいね情報を追加
+  const cardsWithTags: LoreCardWithTags[] = cards.map((card) => {
+    const likeInfo = likesInfo.get(card.id) ?? { likeCount: 0, isLiked: false }
+    return {
+      ...card,
+      tags: extractTags(card.card_tags),
+      likeCount: likeInfo.likeCount,
+      isLiked: likeInfo.isLiked,
+    }
+  })
 
   return { success: true, data: cardsWithTags }
+}
+
+// いいね情報を取得するヘルパー関数
+async function getCardLikesInfo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  cardIds: string[],
+  userId: string | null
+): Promise<Map<string, { likeCount: number; isLiked: boolean }>> {
+  const likesMap = new Map<string, { likeCount: number; isLiked: boolean }>()
+
+  if (cardIds.length === 0) {
+    return likesMap
+  }
+
+  // 初期化
+  for (const cardId of cardIds) {
+    likesMap.set(cardId, { likeCount: 0, isLiked: false })
+  }
+
+  // いいね数を取得
+  const { data: likeCounts, error: countError } = await supabase
+    .from("card_likes")
+    .select("card_id")
+    .in("card_id", cardIds)
+
+  if (countError) {
+    console.error("Failed to fetch like counts:", countError)
+    return likesMap
+  }
+
+  // いいね数を集計
+  const countMap = new Map<string, number>()
+  for (const like of likeCounts ?? []) {
+    const current = countMap.get(like.card_id) ?? 0
+    countMap.set(like.card_id, current + 1)
+  }
+
+  for (const [cardId, count] of countMap) {
+    const existing = likesMap.get(cardId)
+    if (existing) {
+      existing.likeCount = count
+    }
+  }
+
+  // ログインユーザーのいいね状態を取得
+  if (userId) {
+    const { data: userLikes, error: userLikesError } = await supabase
+      .from("card_likes")
+      .select("card_id")
+      .in("card_id", cardIds)
+      .eq("user_id", userId)
+
+    if (!userLikesError && userLikes) {
+      for (const like of userLikes) {
+        const existing = likesMap.get(like.card_id)
+        if (existing) {
+          existing.isLiked = true
+        }
+      }
+    }
+  }
+
+  return likesMap
 }
 
 // カード一覧取得（ページネーション・フィルタ・ソート対応）
@@ -146,6 +218,25 @@ export async function getLoreCardsPaginated(
     filteredCardIds = tagFilterResult.cardIds
   }
 
+  // いいね順ソートの場合は特別処理
+  if (sortBy === "likes") {
+    return getLoreCardsSortedByLikes(
+      supabase,
+      {
+        projectId,
+        page,
+        limit,
+        search,
+        filteredCardIds,
+        authorIds,
+        dateFrom,
+        dateTo,
+        sortOrder,
+      },
+      user.id
+    )
+  }
+
   // ベースクエリを構築
   let query = supabase
     .from("lore_cards")
@@ -190,11 +281,20 @@ export async function getLoreCardsPaginated(
     return { success: false, error: "カードの取得に失敗しました" }
   }
 
+  // いいね情報を取得
+  const cardIds = (cards ?? []).map((card) => card.id)
+  const likesInfo = await getCardLikesInfo(supabase, cardIds, user.id)
+
   // 結果を整形して返す
-  const cardsWithTags: LoreCardWithTags[] = (cards ?? []).map((card) => ({
-    ...card,
-    tags: extractTags(card.card_tags),
-  }))
+  const cardsWithTags: LoreCardWithTags[] = (cards ?? []).map((card) => {
+    const likeInfo = likesInfo.get(card.id) ?? { likeCount: 0, isLiked: false }
+    return {
+      ...card,
+      tags: extractTags(card.card_tags),
+      likeCount: likeInfo.likeCount,
+      isLiked: likeInfo.isLiked,
+    }
+  })
 
   const total = count ?? 0
   const { totalPages } = calculatePagination(total, page, limit)
@@ -202,6 +302,115 @@ export async function getLoreCardsPaginated(
   return {
     success: true,
     data: { cards: cardsWithTags, total, page, totalPages },
+  }
+}
+
+// いいね順でソートされたカード一覧を取得
+async function getLoreCardsSortedByLikes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  options: {
+    projectId: string
+    page: number
+    limit: number
+    search?: string
+    filteredCardIds: string[] | null
+    authorIds?: string[]
+    dateFrom?: string
+    dateTo?: string
+    sortOrder: "asc" | "desc"
+  },
+  userId: string
+): Promise<LoreCardActionResult<PaginatedLoreCards>> {
+  const {
+    projectId,
+    page,
+    limit,
+    search,
+    filteredCardIds,
+    authorIds,
+    dateFrom,
+    dateTo,
+    sortOrder,
+  } = options
+
+  // まず全カードを取得（フィルタのみ適用、ページネーションなし）
+  let query = supabase
+    .from("lore_cards")
+    .select(
+      `
+      *,
+      card_tags (
+        tags (*)
+      )
+    `
+    )
+    .eq("project_id", projectId)
+
+  // フィルタを適用
+  if (filteredCardIds) {
+    query = query.in("id", filteredCardIds)
+  }
+  if (search && search.trim()) {
+    const searchTerm = `%${search.trim()}%`
+    query = query.or(`title.ilike.${searchTerm},content.ilike.${searchTerm}`)
+  }
+  if (authorIds && authorIds.length > 0) {
+    query = query.in("author_id", authorIds)
+  }
+  if (dateFrom) {
+    query = query.gte("created_at", dateFrom)
+  }
+  if (dateTo) {
+    query = query.lt("created_at", getDateRangeEndDate(dateTo))
+  }
+
+  const { data: allCards, error } = await query
+
+  if (error) {
+    console.error("Failed to fetch lore cards:", error)
+    return { success: false, error: "カードの取得に失敗しました" }
+  }
+
+  if (!allCards || allCards.length === 0) {
+    return {
+      success: true,
+      data: { cards: [], total: 0, page, totalPages: 0 },
+    }
+  }
+
+  // いいね情報を取得
+  const cardIds = allCards.map((card) => card.id)
+  const likesInfo = await getCardLikesInfo(supabase, cardIds, userId)
+
+  // カードをいいね数でソート
+  const cardsWithLikes = allCards.map((card) => {
+    const likeInfo = likesInfo.get(card.id) ?? { likeCount: 0, isLiked: false }
+    return {
+      ...card,
+      tags: extractTags(card.card_tags),
+      likeCount: likeInfo.likeCount,
+      isLiked: likeInfo.isLiked,
+    }
+  })
+
+  // いいね数でソート（同数の場合は更新日でソート）
+  cardsWithLikes.sort((a, b) => {
+    const likeDiff = sortOrder === "desc"
+      ? b.likeCount - a.likeCount
+      : a.likeCount - b.likeCount
+    if (likeDiff !== 0) return likeDiff
+    // いいね数が同じ場合は更新日降順
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  })
+
+  // ページネーションを適用
+  const total = cardsWithLikes.length
+  const { offset, totalPages } = calculatePagination(total, page, limit)
+  const paginatedCards = cardsWithLikes.slice(offset, offset + limit)
+
+  return {
+    success: true,
+    data: { cards: paginatedCards, total, page, totalPages },
   }
 }
 

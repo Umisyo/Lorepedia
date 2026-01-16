@@ -155,6 +155,7 @@ export function CardFilterBar({ tags }: Props) {
               <SelectItem value="updated_at">更新日</SelectItem>
               <SelectItem value="created_at">作成日</SelectItem>
               <SelectItem value="title">タイトル</SelectItem>
+              <SelectItem value="likes">いいね順</SelectItem>
             </SelectContent>
           </Select>
           <Button

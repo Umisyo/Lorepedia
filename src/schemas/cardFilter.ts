@@ -2,7 +2,7 @@ import { z } from "zod"
 import type { CardFilterState } from "@/types/filter"
 
 // ソート対象カラムのスキーマ
-export const sortBySchema = z.enum(["created_at", "updated_at", "title"])
+export const sortBySchema = z.enum(["created_at", "updated_at", "title", "likes"])
 
 // ソート順のスキーマ
 export const sortOrderSchema = z.enum(["asc", "desc"])
