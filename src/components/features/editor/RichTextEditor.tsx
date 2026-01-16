@@ -139,8 +139,9 @@ export function RichTextEditor({
         class: cn(
           "prose prose-neutral dark:prose-invert max-w-none",
           "min-h-[300px] p-4 focus:outline-none",
-          // 見出しスタイル
+          // 見出し・太字スタイル（ライトモード対応）
           "prose-headings:font-bold prose-headings:text-foreground",
+          "prose-strong:text-foreground",
           "prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-4",
           "prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-3",
           "prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2",
