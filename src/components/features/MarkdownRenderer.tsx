@@ -44,11 +44,14 @@ function CardMentionLink({
 }
 
 /**
- * CardMentionLinkコンポーネントかどうかを判定
+ * カードメンション要素かどうかを判定
+ * ReactMarkdownの処理順序により、p要素のchildren内ではまだa要素として存在するため、
+ * hrefがcard:で始まるかどうかで判定する
  */
 function isCardMentionElement(element: React.ReactElement): boolean {
-  // コンポーネントの型で直接判定
-  return element.type === CardMentionLink
+  // propsからhrefを取得してcard:で始まるかチェック
+  const props = element.props as { href?: string }
+  return typeof props?.href === "string" && props.href.startsWith("card:")
 }
 
 /**
