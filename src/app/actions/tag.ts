@@ -1,6 +1,9 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
+
 import { createClient } from "@/utils/supabase/server"
+import { createTagSchema, type CreateTagFormData } from "@/schemas/tag"
 import type { Tag } from "@/types/loreCard"
 
 // アクション結果の型
@@ -124,10 +127,83 @@ export async function updateCardTags(
   }
 
   // キャッシュ再検証
-  const { revalidatePath } = await import("next/cache")
   revalidatePath(`/projects/${projectId}`)
   revalidatePath(`/projects/${projectId}/cards`)
   revalidatePath(`/projects/${projectId}/cards/${cardId}`)
 
   return { success: true }
+}
+
+// タグを新規作成
+export async function createTag(
+  projectId: string,
+  data: CreateTagFormData
+): Promise<TagActionResult<Tag>> {
+  const supabase = await createClient()
+
+  // 認証チェック
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: "ログインが必要です" }
+  }
+
+  // 権限チェック（editor以上）
+  const { data: isEditor } = await supabase.rpc("is_project_editor", {
+    p_project_id: projectId,
+  })
+  if (!isEditor) {
+    return { success: false, error: "権限がありません" }
+  }
+
+  // バリデーション
+  const parsed = createTagSchema.safeParse(data)
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]
+    return {
+      success: false,
+      error: firstError?.message ?? "入力内容に誤りがあります",
+    }
+  }
+
+  // 重複チェック（同一プロジェクト内で同名タグ禁止、大文字小文字を区別しない）
+  // ilikeのワイルドカード文字（%と_）をエスケープして誤マッチを防ぐ
+  const escapedName = parsed.data.name
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+  const { data: existingTag } = await supabase
+    .from("tags")
+    .select("id")
+    .eq("project_id", projectId)
+    .ilike("name", escapedName)
+    .maybeSingle()
+
+  if (existingTag) {
+    return { success: false, error: "同じ名前のタグが既に存在します" }
+  }
+
+  // タグ作成
+  const { data: tag, error } = await supabase
+    .from("tags")
+    .insert({
+      project_id: projectId,
+      name: parsed.data.name,
+      color: parsed.data.color ?? null,
+      created_by: user.id,
+    })
+    .select("*")
+    .single()
+
+  if (error || !tag) {
+    console.error("Failed to create tag:", error)
+    return { success: false, error: "タグの作成に失敗しました" }
+  }
+
+  // キャッシュ再検証
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath(`/projects/${projectId}/cards`)
+
+  return { success: true, data: tag }
 }

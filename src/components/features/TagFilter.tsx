@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Check, ChevronsUpDown, X } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Check, ChevronsUpDown, X, Plus, Loader2, Search } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { createTag } from "@/app/actions/tag"
 import type { Tag } from "@/types/loreCard"
 
 type Props = {
@@ -18,12 +20,48 @@ type Props = {
   selectedIds: string[]
   onChange: (ids: string[]) => void
   disabled?: boolean
+  // タグ作成機能用
+  projectId?: string
+  onTagCreated?: (tag: Tag) => void
+  allowCreate?: boolean
 }
 
-export function TagFilter({ tags, selectedIds, onChange, disabled }: Props) {
+export function TagFilter({
+  tags,
+  selectedIds,
+  onChange,
+  disabled,
+  projectId,
+  onTagCreated,
+  allowCreate = false,
+}: Props) {
   const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isCreating, setIsCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const selectedTags = tags.filter((tag) => selectedIds.includes(tag.id))
+
+  // フィルタリングされたタグ（メモ化でパフォーマンス最適化）
+  const filteredTags = useMemo(
+    () =>
+      tags.filter((tag) =>
+        tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [tags, searchQuery]
+  )
+
+  // 新規作成可能かどうか（メモ化でパフォーマンス最適化）
+  const canCreate = useMemo(
+    () =>
+      allowCreate &&
+      projectId &&
+      searchQuery.trim().length > 0 &&
+      !tags.some(
+        (tag) => tag.name.toLowerCase() === searchQuery.trim().toLowerCase()
+      ),
+    [allowCreate, projectId, searchQuery, tags]
+  )
 
   const handleToggle = (tagId: string) => {
     if (selectedIds.includes(tagId)) {
@@ -37,15 +75,46 @@ export function TagFilter({ tags, selectedIds, onChange, disabled }: Props) {
     onChange([])
   }
 
+  const handleCreate = async () => {
+    if (!projectId || !searchQuery.trim()) return
+    setIsCreating(true)
+    setError(null)
+
+    const result = await createTag(projectId, { name: searchQuery.trim() })
+
+    if (result.success && result.data) {
+      onTagCreated?.(result.data)
+      // 作成したタグを自動選択
+      onChange([...selectedIds, result.data.id])
+      setSearchQuery("")
+    } else {
+      setError(result.error ?? "タグの作成に失敗しました")
+    }
+
+    setIsCreating(false)
+  }
+
+  // Popoverを閉じる時に検索クエリをリセット
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    if (!isOpen) {
+      setSearchQuery("")
+      setError(null)
+    }
+  }
+
+  // タグが0個でも、allowCreateがtrueならボタンを有効にする
+  const isButtonDisabled = disabled || (tags.length === 0 && !allowCreate)
+
   return (
     <div className="flex items-center gap-2">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            disabled={disabled || tags.length === 0}
+            disabled={isButtonDisabled}
             className="min-w-[140px] justify-between"
           >
             <span className="truncate">
@@ -56,14 +125,38 @@ export function TagFilter({ tags, selectedIds, onChange, disabled }: Props) {
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[240px] p-2" align="start">
-          {tags.length === 0 ? (
+        <PopoverContent className="w-[280px] p-2" align="start">
+          {/* 検索/入力フィールド */}
+          {(tags.length > 0 || allowCreate) && (
+            <div className="mb-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={
+                    allowCreate ? "検索または新規作成..." : "タグを検索..."
+                  }
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    setError(null)
+                  }}
+                  className="pl-8"
+                />
+              </div>
+              {error && (
+                <p className="mt-1 text-xs text-destructive">{error}</p>
+              )}
+            </div>
+          )}
+
+          {/* タグ一覧 */}
+          {filteredTags.length === 0 && !canCreate ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              タグがありません
+              {searchQuery ? "該当するタグがありません" : "タグがありません"}
             </p>
           ) : (
-            <div className="max-h-[300px] overflow-y-auto">
-              {tags.map((tag) => {
+            <div className="max-h-[250px] overflow-y-auto">
+              {filteredTags.map((tag) => {
                 const isSelected = selectedIds.includes(tag.id)
                 return (
                   <button
@@ -94,6 +187,31 @@ export function TagFilter({ tags, selectedIds, onChange, disabled }: Props) {
                 )
               })}
             </div>
+          )}
+
+          {/* 新規作成ボタン */}
+          {canCreate && (
+            <>
+              {filteredTags.length > 0 && (
+                <div className="my-2 border-t border-border" />
+              )}
+              <button
+                type="button"
+                onClick={handleCreate}
+                disabled={isCreating}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent disabled:opacity-50"
+              >
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                <span>
+                  「<span className="font-medium">{searchQuery.trim()}</span>
+                  」を作成
+                </span>
+              </button>
+            </>
           )}
         </PopoverContent>
       </Popover>
