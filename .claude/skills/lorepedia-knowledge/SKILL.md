@@ -111,56 +111,20 @@ exo_explore_related(memory_id="見つかったメモリID")
 exo_trace_lineage(memory_id="決定のID", direction="backward")
 ```
 
-## 記録テンプレート
+## 記録テンプレート（共通）
 
-### バグ修正
 ```markdown
-## 問題
-[エラーメッセージや症状]
+## 問題/発見
+[エラーメッセージ、症状、または学んだこと]
 
-## 原因
-[根本原因の説明]
+## 原因/背景
+[根本原因または文脈]
 
-## 解決策
-[具体的な修正内容]
+## 解決策/内容
+[具体的な修正内容またはコード例]
 
-## 関連ファイル
-- `path/to/file.ts`
-
-## 再発防止
-[同様の問題を防ぐためのポイント]
-```
-
-### 設定・回避策
-```markdown
-## 概要
-[何の設定・回避策か]
-
-## 背景
-[なぜこの設定が必要か]
-
-## 設定内容
-\`\`\`typescript
-// コード例
-\`\`\`
-
-## 注意点
-[変更時の影響、依存関係など]
-```
-
-### 技術的インサイト
-```markdown
-## 発見
-[何を学んだか]
-
-## コンテキスト
-[どのような状況で発見したか]
-
-## 適用場面
-[この知識が役立つシーン]
-
-## 参考
-[関連ドキュメント、リンクなど]
+## 再発防止/適用場面
+[同様の問題を防ぐポイント、または知識が役立つシーン]
 ```
 
 ## セッション管理
@@ -177,59 +141,15 @@ exo_sleep()
 
 ## 使用例
 
-### 例1: 型エラーを解決した時（自動記録）
 ```
+// エラー解決時の記録
 exo_store_memory(
-  content="""
-## 問題
-TypeScriptで `Property 'X' does not exist on type 'Y'` エラー
-
-## 原因
-型定義が古く、実際のオブジェクト構造と不一致
-
-## 解決策
-1. 型定義ファイルを再生成
-2. エディタをリロード
-
-## 再発防止
-スキーマ変更後は必ず型を再生成する
-""",
+  content="## 問題\nTypeScriptで型エラー\n## 原因\n型定義が古い\n## 解決策\n型定義を再生成\n## 再発防止\nスキーマ変更後は型を再生成",
   context_name="lorepedia",
   tags=["type-error", "typescript", "bugfix"],
   memory_type="success"
 )
-```
 
-### 例2: ビルドエラーを解決した時（自動記録）
-```
-exo_store_memory(
-  content="""
-## 問題
-`Module not found: Can't resolve 'xxx'`
-
-## 原因
-依存パッケージのバージョン不整合
-
-## 解決策
-node_modules削除後、再インストール
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-## 再発防止
-パッケージ追加時はバージョン互換性を確認
-""",
-  context_name="lorepedia",
-  tags=["build-error", "npm", "bugfix"],
-  memory_type="success"
-)
-```
-
-### 例3: 過去の類似問題を検索
-```
-exo_recall_memories(
-  query="build error module not found",
-  tag_filter=["build-error"]
-)
+// 類似問題の検索
+exo_recall_memories(query="type error", tag_filter=["typescript"])
 ```

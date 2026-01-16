@@ -56,21 +56,8 @@
 
 #### 必須ルール
 
-```typescript
-// ❌ 禁止: any型の使用
-const data: any = fetchData()
-
-// ✅ 推奨: 明示的な型定義
-const data: UserData = fetchData()
-
-// ❌ 禁止: 型アサーションの乱用
-const user = response as User
-
-// ✅ 推奨: 型ガードの使用
-function isUser(obj: unknown): obj is User {
-  return typeof obj === 'object' && obj !== null && 'id' in obj
-}
-```
+- `any`禁止 → `unknown` + 型ガード関数を使用
+- 型アサーション（`as`）禁止 → 型ガード関数を使用
 
 #### 型定義の配置
 
@@ -102,22 +89,8 @@ src/
 
 ### コンポーネント設計
 
-```typescript
-// 推奨: 関数コンポーネント + 明示的な型
-type Props = {
-  title: string
-  onSubmit: (data: FormData) => void
-  children?: React.ReactNode
-}
-
-export function MyComponent({ title, onSubmit, children }: Props) {
-  // ...
-}
-
-// 推奨: デフォルトエクスポートは避ける（named export優先）
-// ❌ export default function MyComponent() {}
-// ✅ export function MyComponent() {}
-```
+- 関数コンポーネント + 明示的なPropsの型定義
+- named export優先（`export default`は避ける）
 
 ---
 
@@ -135,12 +108,7 @@ export function MyComponent({ title, onSubmit, children }: Props) {
 - [ ] 新規コンポーネント: 最低1つのテストケース
 - [ ] ユーティリティ関数: 境界値を含むテスト
 - [ ] API Route: MSWでモックしたテスト
-
-```typescript
-// テストファイルの命名
-ComponentName.test.tsx  // コンポーネントテスト
-utilName.test.ts        // ユーティリティテスト
-```
+- ファイル命名: `ComponentName.test.tsx`, `utilName.test.ts`
 
 ### パフォーマンス
 
@@ -170,27 +138,9 @@ docs/対象         # ドキュメント
 
 ### コミットメッセージ
 
-```
-<種類>: <変更内容の要約>
+形式: `<種類>: <変更内容の要約>`
 
-<詳細な説明（必要に応じて）>
-```
-
-**種類:**
-- `feat`: 新機能
-- `fix`: バグ修正
-- `refactor`: リファクタリング
-- `test`: テスト追加・修正
-- `docs`: ドキュメント
-- `chore`: 設定・依存関係
-
-**例:**
-```
-feat: ワールド一覧ページを追加
-
-- WorldListコンポーネントを作成
-- Supabaseからデータ取得するServer Actionを実装
-```
+種類: `feat`(新機能), `fix`(バグ修正), `refactor`, `test`, `docs`, `chore`
 
 ---
 
@@ -207,96 +157,19 @@ feat: ワールド一覧ページを追加
 
 ### 実装フロー（必須手順）
 
-タスクを実装する際は、以下のフローを**必ず**完了させること：
-
 ```
-1. Worktree作成 → 2. 実装 → 3. Commit → 4. Push → 5. PR作成 → 6. セルフレビュー・修正サイクル
+Worktree作成 → 実装 → (UI時: /frontend-verify + /rams) → Commit → Push → PR作成 → セルフレビュー
 ```
 
-#### Step 1: Worktree作成
+| Step | 操作 | スキル/コマンド |
+|------|------|----------------|
+| 1 | Worktree作成 | `/worktree-create` |
+| 2 | 実装（1機能1コミット） | - |
+| 2.5 | UI実装時レビュー | `/frontend-verify`, `/rams` |
+| 3-5 | Commit → Push → PR | `/pr-create` |
+| 6 | セルフレビュー（最大3回） | `pr-self-review` エージェント |
 
-```bash
-# mainブランチから新しいworktreeを作成
-git worktree add ../Lorepedia-<branch-name> -b <branch-name>
-
-# worktreeディレクトリに移動して作業開始
-cd ../Lorepedia-<branch-name>
-```
-
-#### Step 2: 実装
-
-- 実装を行う
-- 適切な粒度でコミットを分割（1機能1コミットが目安）
-
-#### Step 2.5: UIレビュー（UI実装時）
-
-UIコンポーネントやページを実装した場合は、以下のスキルを使用してUIレビューを自律的に実行する：
-
-**1. `/frontend-verify` - 動作検証（agent-browser使用）**
-- ページナビゲーション・表示確認
-- インタラクション（クリック、フォーム入力）テスト
-- スナップショット・スクリーンショット取得
-
-**2. `/rams` - デザイン・アクセシビリティレビュー**
-- アクセシビリティの確認
-- ビジュアルデザインの確認
-
-指摘事項があれば修正してから次のステップへ進む
-
-#### Step 3: Commit
-
-```bash
-git add .
-git commit -m "feat: 機能の説明"
-```
-
-#### Step 4: Push
-
-```bash
-git push -u origin <branch-name>
-```
-
-#### Step 5: PR作成
-
-```bash
-gh pr create --title "タイトル" --body "説明"
-```
-
-#### Step 6: セルフレビュー・修正サイクル
-
-PR作成後、以下のサイクルを**最大3回**繰り返す：
-
-**1. レビュー実行**
-- `pr-self-review` sub agentを使用してレビューを実行
-
-**2. 判定**
-- 🔴必須 または 🟡推奨 の指摘がある → 3へ
-- 指摘なし → サイクル終了
-
-**3. 修正**
-- 指摘された箇所を修正
-- 修正をコミット・プッシュ
-- 1に戻る
-
-**4. 3回繰り返しても指摘が残る場合**
-- 残っている指摘事項をPRコメントに記載
-- ユーザーに判断を委ねる
-
-### Worktree操作コマンド
-
-```bash
-# worktree作成（ブランチも同時に作成）
-git worktree add ../Lorepedia-<branch-name> -b <branch-name>
-
-# 作業完了後のworktree削除
-git worktree remove ../Lorepedia-<branch-name>
-
-# worktree一覧確認
-git worktree list
-
-# 不要なブランチのクリーンアップ
-/clean_gone
-```
+**Worktree操作**: `/worktree-create`, `/clean_gone` を使用
 
 ### 実装完了の定義
 
@@ -316,52 +189,15 @@ git worktree list
 
 ### タスク管理
 
-**task-managerエージェントによる管理:**
+`task-manager` エージェントを使用してNotionタスク管理DBと連携する。
 
-- タスクの作成・更新・進捗管理はすべて `task-manager` エージェントを通じて行う
-- Notionタスク管理データベースと自動連携される
+**ステータス遷移**: 未着手 → 進行中 → レビュー待ち → 完了（または保留）
 
-**ステータス遷移:**
+**運用ルール**:
+- タスク着手時 → 「進行中」、PR作成時 → 「レビュー待ち」、完了時 → 「完了」
+- 派生タスク発見時は新規タスクとして登録（現タスクでは対応しない）
 
-```
-未着手 → 進行中 → レビュー待ち → 完了
-              ↘ 保留（問題発生時）
-```
-
-**運用ルール:**
-
-| タイミング | アクション |
-|-----------|-----------|
-| タスク着手時 | ステータスを「進行中」に変更 |
-| PR作成時 | ステータスを「レビュー待ち」に変更 |
-| マージ完了時 | ステータスを「完了」に変更 |
-| ブロッカー発生時 | ステータスを「保留」に変更、問題点を記録 |
-| 派生タスク発見時 | 新規タスクを作成（現タスクでは対応しない） |
-
-**タスク登録時の必須項目:**
-
-タスクを新規作成する際は、以下のプロパティを必ず設定すること：
-
-| プロパティ | 必須 | 説明 |
-|-----------|:----:|------|
-| タスク名 | ✅ | 具体的な作業内容がわかる名前 |
-| 対象画面 | ✅ | 画面一覧DBへのリレーション（どの画面のタスクか） |
-| 優先度 | ✅ | 🔴 High / 🟡 Medium / 🟢 Low |
-| 実行コンテキスト | ✅ | 新規作成 / 修正・リファクタ / バグ修正 / テスト追加 / ドキュメント |
-| 実行者 | ✅ | Claude / 人間 |
-| 対象ファイル・パス | 推奨 | 作業対象のファイルパス |
-| 受け入れ条件 | 推奨 | タスク完了の判断基準 |
-| 依存タスク | 該当時 | このタスクの前に完了すべきタスク |
-| 関連ドキュメント | 該当時 | Notionの仕様ページURL |
-
-**派生タスクの扱い:**
-
-作業中に以下のような問題を発見した場合、新規タスクとして登録し、現タスクでは対応しない：
-
-- スコープ外のバグ
-- リファクタリングの必要性
-- 将来的な改善点
-- 技術的負債
+※ プロパティ定義・作成例は `task-manager` エージェント参照
 
 ---
 
