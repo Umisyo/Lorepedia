@@ -192,7 +192,10 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
   // proseクラス設定
   const proseClassName = cn(
     "prose prose-neutral dark:prose-invert max-w-none",
-    "prose-headings:font-bold",
+    // 文字色を明示的に設定（ライトモード対応）
+    "text-foreground",
+    "prose-headings:font-bold prose-headings:text-foreground",
+    "prose-strong:text-foreground",
     "prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-4",
     "prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-3",
     "prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2",
