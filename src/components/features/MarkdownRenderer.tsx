@@ -47,10 +47,8 @@ function CardMentionLink({
  * CardMentionLinkコンポーネントかどうかを判定
  */
 function isCardMentionElement(element: React.ReactElement): boolean {
-  // CardMentionLinkコンポーネントのclassNameで判定
-  const props = element.props as Record<string, unknown>
-  const className = props.className as string | undefined
-  return className?.includes("card-mention") ?? false
+  // コンポーネントの型で直接判定
+  return element.type === CardMentionLink
 }
 
 /**
