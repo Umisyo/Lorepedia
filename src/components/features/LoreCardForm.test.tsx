@@ -366,8 +366,8 @@ describe("LoreCardForm", () => {
 
   describe("タグ機能", () => {
     const mockTags = [
-      { id: "tag-1", name: "キャラクター", color: "#FF0000", project_id: "project-1", created_at: "2024-01-01T00:00:00Z" },
-      { id: "tag-2", name: "世界観", color: "#00FF00", project_id: "project-1", created_at: "2024-01-01T00:00:00Z" },
+      { id: "tag-1", name: "キャラクター", color: "#FF0000", project_id: "project-1", created_at: "2024-01-01T00:00:00Z", created_by: null, description: null },
+      { id: "tag-2", name: "世界観", color: "#00FF00", project_id: "project-1", created_at: "2024-01-01T00:00:00Z", created_by: null, description: null },
     ]
 
     it("タグフィールドが表示される", () => {
