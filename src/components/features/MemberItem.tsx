@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { ProjectMemberWithProfile, MemberRole } from "@/types/project"
+import type { ProjectMemberWithProfile } from "@/types/project"
 import { roleLabels } from "@/types/project"
 import { removeMember } from "@/app/actions/member"
 
