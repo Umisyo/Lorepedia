@@ -19,6 +19,7 @@ export type CreateLoreCardFormData = z.infer<typeof createLoreCardSchema>
 export type CreateLoreCardFormInput = z.input<typeof createLoreCardSchema>
 
 // カード更新スキーマ（部分更新用）
+// タグの更新はupdateCardTags側で処理するため、ここには含めない
 export const updateLoreCardSchema = z.object({
   title: z
     .string()
@@ -30,7 +31,6 @@ export const updateLoreCardSchema = z.object({
     .min(1, "詳細を入力してください")
     .max(50000, "詳細は50,000文字以内で入力してください")
     .optional(),
-  tagIds: z.array(z.string()).optional(),
 })
 
 export type UpdateLoreCardFormData = z.infer<typeof updateLoreCardSchema>

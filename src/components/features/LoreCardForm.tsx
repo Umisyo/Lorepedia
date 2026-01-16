@@ -67,7 +67,7 @@ export function LoreCardForm({
     setIsSubmitting(true)
     setFormError(null)
 
-    const tagIds = data.tagIds ?? []
+    const tagIds = data.tagIds
 
     if (isEditMode && cardId) {
       const result = await updateLoreCard(projectId, cardId, data)
@@ -75,7 +75,9 @@ export function LoreCardForm({
         // タグを更新
         const tagResult = await updateCardTags(projectId, cardId, tagIds)
         if (!tagResult.success) {
-          console.error("Failed to update tags:", tagResult.error)
+          setFormError(tagResult.error || "タグの更新に失敗しました")
+          setIsSubmitting(false)
+          return
         }
         router.push(`/projects/${projectId}/cards/${result.data.id}`)
       } else {
@@ -89,7 +91,9 @@ export function LoreCardForm({
         if (tagIds.length > 0) {
           const tagResult = await updateCardTags(projectId, result.data.id, tagIds)
           if (!tagResult.success) {
-            console.error("Failed to set tags:", tagResult.error)
+            setFormError(tagResult.error || "タグの設定に失敗しました")
+            setIsSubmitting(false)
+            return
           }
         }
         router.push(`/projects/${projectId}/cards/${result.data.id}`)

@@ -86,9 +86,11 @@ export async function updateCardTags(
 
   const currentTagIds = currentTags?.map((ct) => ct.tag_id) ?? []
 
-  // 差分計算
-  const toDelete = currentTagIds.filter((id) => !tagIds.includes(id))
-  const toAdd = tagIds.filter((id) => !currentTagIds.includes(id))
+  // 差分計算（Setを使用してO(n)で処理）
+  const currentSet = new Set(currentTagIds)
+  const newSet = new Set(tagIds)
+  const toDelete = currentTagIds.filter((id) => !newSet.has(id))
+  const toAdd = tagIds.filter((id) => !currentSet.has(id))
 
   // 削除対象のタグを削除
   if (toDelete.length > 0) {
