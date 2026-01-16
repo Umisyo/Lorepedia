@@ -32,7 +32,7 @@
 
   /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
 
   /* Border, Input, Ring */
   --border: oklch(0.922 0 0);
