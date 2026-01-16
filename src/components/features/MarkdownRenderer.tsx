@@ -128,11 +128,12 @@ function processChildren(
 
   // React要素の場合は子要素を再帰的に処理
   if (React.isValidElement(children)) {
-    const childrenProp = (children.props as { children?: React.ReactNode }).children
+    const props = children.props as Record<string, unknown>
+    const childrenProp = props.children as React.ReactNode | undefined
     if (childrenProp !== undefined) {
       return React.cloneElement(
         children,
-        { ...children.props },
+        { ...props },
         processChildren(childrenProp, projectId, `${keyPrefix}child-`)
       )
     }
