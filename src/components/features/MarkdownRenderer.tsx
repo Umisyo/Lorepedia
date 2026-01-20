@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
 import rehypeHighlight from "rehype-highlight"
 import Link from "next/link"
@@ -173,6 +174,10 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
     "prose-blockquote:pl-4 prose-blockquote:italic",
     "prose-code:bg-muted prose-code:rounded prose-code:px-1.5 prose-code:py-0.5",
     "prose-pre:bg-muted prose-pre:rounded prose-pre:p-4",
+    // テーブルスタイル（GFM対応）
+    "prose-table:border-collapse prose-table:w-full",
+    "prose-th:border prose-th:border-border prose-th:bg-muted prose-th:p-2 prose-th:font-bold",
+    "prose-td:border prose-td:border-border prose-td:p-2",
     className
   )
 
@@ -180,6 +185,7 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
     <div className={proseClassName}>
       <ReactMarkdown
         urlTransform={transformUrl}
+        remarkPlugins={[remarkGfm]}
         rehypePlugins={[
           [rehypeSanitize, customSanitizeSchema],
           rehypeHighlight,

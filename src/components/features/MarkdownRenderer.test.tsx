@@ -59,6 +59,43 @@ describe("MarkdownRenderer", () => {
     )
   })
 
+  describe("GFM（GitHub Flavored Markdown）", () => {
+    it("テーブルをレンダリングできる", () => {
+      const tableMarkdown = `
+| 列1 | 列2 |
+| --- | --- |
+| A | B |
+| C | D |
+`
+      const { container } = render(<MarkdownRenderer content={tableMarkdown} />)
+
+      expect(container.querySelector("table")).toBeInTheDocument()
+      expect(container.querySelectorAll("th")).toHaveLength(2)
+      expect(container.querySelectorAll("td")).toHaveLength(4)
+    })
+
+    it("打消し線をレンダリングできる", () => {
+      const { container } = render(
+        <MarkdownRenderer content="~~deleted text~~" />
+      )
+      const del = container.querySelector("del")
+      expect(del).toBeInTheDocument()
+      expect(del).toHaveTextContent("deleted text")
+    })
+
+    it("タスクリストをレンダリングできる", () => {
+      const taskListMarkdown = `
+- [ ] 未完了タスク
+- [x] 完了タスク
+`
+      const { container } = render(
+        <MarkdownRenderer content={taskListMarkdown} />
+      )
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]')
+      expect(checkboxes).toHaveLength(2)
+    })
+  })
+
   describe("カードメンション", () => {
     it("カードメンションをリンクとしてレンダリングできる", () => {
       render(
