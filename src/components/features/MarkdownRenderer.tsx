@@ -76,12 +76,27 @@ function removeAtBeforeCardLinks(children: React.ReactNode): React.ReactNode {
   return result
 }
 
-// rehype-sanitize用のカスタムスキーマ（card:スキームを許可）
+// rehype-sanitize用のカスタムスキーマ（card:スキームとGFM要素を許可）
 const customSanitizeSchema = {
   ...defaultSchema,
   protocols: {
     ...defaultSchema.protocols,
     href: [...(defaultSchema.protocols?.href ?? []), "card"],
+  },
+  // GFMテーブル要素を許可
+  tagNames: [
+    ...(defaultSchema.tagNames ?? []),
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "th",
+    "td",
+  ],
+  // GFMタスクリストのチェックボックスを許可
+  attributes: {
+    ...defaultSchema.attributes,
+    input: ["type", "checked", "disabled"],
   },
 }
 
