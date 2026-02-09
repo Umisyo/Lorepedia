@@ -1,27 +1,11 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import dynamic from "next/dynamic"
 import { ArrowLeft, GitBranch } from "lucide-react"
 
 import { createClient } from "@/utils/supabase/server"
 import { getProject } from "@/app/actions/loreCard"
 import { getCardReferences } from "@/app/actions/cardReference"
-
-// バンドルサイズ対策: React Flowを動的インポート
-const CardReferenceGraph = dynamic(
-  () =>
-    import("@/components/features/graph/CardReferenceGraph").then(
-      (mod) => mod.CardReferenceGraph
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-[calc(100vh-12rem)] items-center justify-center">
-        <p className="text-muted-foreground">グラフを読み込み中...</p>
-      </div>
-    ),
-  }
-)
+import { CardReferenceGraphLoader } from "@/components/features/graph/CardReferenceGraphLoader"
 
 type Props = {
   params: Promise<{ projectId: string }>
@@ -77,7 +61,10 @@ export default async function GraphPage({ params }: Props) {
             </p>
           </div>
         ) : (
-          <CardReferenceGraph data={result.data} projectId={projectId} />
+          <CardReferenceGraphLoader
+            data={result.data}
+            projectId={projectId}
+          />
         )
       ) : (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
