@@ -71,3 +71,19 @@ export const referenceTypeDescriptions: Record<ReferenceType, string> = {
   related: "この設定と関連がある",
   mentions: "この設定に言及している",
 }
+
+// グラフノードのデータ型
+export type CardNodeData = {
+  label: string
+  tags: Tag[]
+  projectId: string
+  cardId: string
+}
+
+// グラフ用参照データ型
+export type CardReferenceData = {
+  id: string
+  sourceCardId: string
+  targetCardId: string
+  referenceType: ReferenceType
+}

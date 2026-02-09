@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Plus, ArrowLeft, Settings } from "lucide-react"
+import { Plus, ArrowLeft, Settings, GitBranch } from "lucide-react"
 
 import { createClient } from "@/utils/supabase/server"
 import { getLoreCardsPaginated, getProject } from "@/app/actions/loreCard"
@@ -96,6 +96,12 @@ export default async function ProjectDetailPage({
             )}
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href={`/projects/${projectId}/graph`}>
+                <GitBranch className="mr-2 h-4 w-4" />
+                グラフ
+              </Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link href={`/projects/${projectId}/settings`}>
                 <Settings className="mr-2 h-4 w-4" />
