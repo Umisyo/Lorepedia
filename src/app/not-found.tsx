@@ -1,0 +1,21 @@
+import Link from "next/link"
+import { FileQuestion } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+
+export default function NotFound() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <FileQuestion className="mb-4 h-12 w-12 text-muted-foreground" />
+      <h2 className="mb-2 text-lg font-semibold">
+        ページが見つかりません
+      </h2>
+      <p className="mb-6 text-sm text-muted-foreground">
+        お探しのページは存在しないか、移動した可能性があります。
+      </p>
+      <Button asChild>
+        <Link href="/dashboard">ダッシュボードへ</Link>
+      </Button>
+    </div>
+  )
+}
