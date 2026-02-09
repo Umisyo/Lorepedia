@@ -1,18 +1,18 @@
 "use client"
 
-import Link from "next/link"
 import { AlertTriangle } from "lucide-react"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 
-type ErrorProps = {
+type Props = {
   error: Error & { digest?: string }
   reset: () => void
 }
 
-export default function ErrorPage({ reset }: ErrorProps) {
+export default function ErrorPage({ error: _error, reset }: Props) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
       <AlertTriangle className="mb-4 h-12 w-12 text-destructive" />
       <h2 className="mb-2 text-lg font-semibold">
         エラーが発生しました
