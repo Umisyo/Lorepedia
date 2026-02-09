@@ -92,18 +92,27 @@ describe("search", () => {
       )
     })
 
-    it("RPC呼び出しでエラーが発生した場合はthrowする", async () => {
+    it("RPC呼び出しでエラーが発生した場合は空配列を返す", async () => {
       mockIsEmbeddingAvailable.mockReturnValue(true)
       mockGenerateEmbedding.mockResolvedValue(new Array(1536).fill(0.1))
       mockRpc.mockResolvedValue({
         data: null,
-        error: { message: "RPC error" },
+        error: { message: "Function not found" },
       })
 
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {})
+
       const { searchSimilar } = await import("./search")
-      await expect(
-        searchSimilar("テスト", "project-id")
-      ).rejects.toThrow("類似カード検索に失敗しました: RPC error")
+      const result = await searchSimilar("テスト", "project-id")
+      expect(result).toEqual([])
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Vector search failed:",
+        expect.objectContaining({ message: "Function not found" })
+      )
+
+      consoleErrorSpy.mockRestore()
     })
 
     it("contentがnullの場合は空文字列に変換される", async () => {

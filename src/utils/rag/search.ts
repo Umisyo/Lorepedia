@@ -56,7 +56,8 @@ export async function searchSimilar(
   })
 
   if (error) {
-    throw new Error(`類似カード検索に失敗しました: ${error.message}`)
+    console.error("Vector search failed:", error)
+    return []
   }
 
   if (!Array.isArray(data)) {
