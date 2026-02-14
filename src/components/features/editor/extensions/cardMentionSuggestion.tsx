@@ -22,13 +22,19 @@ export type CardMentionSuggestionOptions = {
 export function createCardMentionSuggestion(
   options: CardMentionSuggestionOptions
 ): Omit<SuggestionOptions<CardMentionSuggestion>, "editor"> {
+  // 前回のクエリを記憶し、同一クエリの重複呼び出しを防止
+  let lastQuery = ""
+
   return {
     char: "@",
     allowSpaces: true,
 
     items: ({ query }): CardMentionSuggestion[] => {
-      // 検索をトリガー
-      options.onSearch(query)
+      // クエリが変わった場合のみ検索をトリガー
+      if (query !== lastQuery) {
+        lastQuery = query
+        options.onSearch(query)
+      }
       // 現在のサジェスト結果を返す
       return options.getSuggestions()
     },
