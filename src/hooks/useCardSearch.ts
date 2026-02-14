@@ -8,94 +8,53 @@ import {
 
 type UseCardSearchOptions = {
   projectId: string
-  debounceMs?: number
 }
 
 type UseCardSearchReturn = {
-  suggestions: CardMentionSuggestion[]
-  isLoading: boolean
-  error: string | null
-  search: (query: string) => void
-  clear: () => void
+  filterCards: (query: string) => CardMentionSuggestion[]
+  isLoaded: boolean
 }
 
 /**
- * カード検索用カスタムフック（デバウンス付き）
+ * カード検索用カスタムフック（プリフェッチ+ローカルフィルタ方式）
+ *
+ * マウント時に全カードをフェッチしてキャッシュし、
+ * filterCardsで同期的にローカルフィルタリングする。
  */
 export function useCardSearch({
   projectId,
-  debounceMs = 300,
 }: UseCardSearchOptions): UseCardSearchReturn {
-  const [suggestions, setSuggestions] = useState<CardMentionSuggestion[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // リクエストIDで古いリクエストの結果を無視する
-  const requestIdRef = useRef(0)
-  const isMountedRef = useRef(true)
+  const allCardsRef = useRef<CardMentionSuggestion[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  const search = useCallback(
-    (query: string) => {
-      // 前回のタイマーをクリア
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+  useEffect(() => {
+    if (!projectId) return
+
+    let cancelled = false
+
+    searchCardsForMention(projectId).then((result) => {
+      if (cancelled) return
+      if (result.success && result.data) {
+        allCardsRef.current = result.data
       }
+      setIsLoaded(true)
+    })
 
-      // 空のクエリの場合は結果をクリア
-      if (!query.trim()) {
-        setSuggestions([])
-        setIsLoading(false)
-        setError(null)
-        return
-      }
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
 
-      // デバウンス待ち中もローディングUIを表示
-      setIsLoading(true)
-      setError(null)
-
-      // デバウンス
-      timeoutRef.current = setTimeout(async () => {
-        // リクエストIDをインクリメント（古いリクエストの結果を無視するため）
-        const currentRequestId = ++requestIdRef.current
-
-        const result = await searchCardsForMention(projectId, query.trim())
-
-        // アンマウント済み、または古いリクエストの場合は結果を無視
-        if (!isMountedRef.current || currentRequestId !== requestIdRef.current) {
-          return
-        }
-
-        if (result.success && result.data) {
-          setSuggestions(result.data)
-        } else {
-          setError(result.error ?? "検索に失敗しました")
-          setSuggestions([])
-        }
-        setIsLoading(false)
-      }, debounceMs)
+  const filterCards = useCallback(
+    (query: string): CardMentionSuggestion[] => {
+      if (!query.trim()) return allCardsRef.current
+      const lower = query.toLowerCase()
+      return allCardsRef.current.filter((c) =>
+        c.title.toLowerCase().includes(lower)
+      )
     },
-    [projectId, debounceMs]
+    []
   )
 
-  const clear = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    setSuggestions([])
-    setIsLoading(false)
-    setError(null)
-  }, [])
-
-  // クリーンアップ
-  useEffect(() => {
-    isMountedRef.current = true
-    return () => {
-      isMountedRef.current = false
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [])
-
-  return { suggestions, isLoading, error, search, clear }
+  return { filterCards, isLoaded }
 }

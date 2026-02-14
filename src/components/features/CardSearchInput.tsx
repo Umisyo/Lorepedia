@@ -23,14 +23,15 @@ export function CardSearchInput({
   const [query, setQuery] = useState("")
   const [showResults, setShowResults] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const { suggestions, isLoading, search, clear } = useCardSearch({
+  const { filterCards, isLoaded } = useCardSearch({
     projectId,
   })
 
-  // 除外対象をフィルタリング
-  const filteredSuggestions = suggestions.filter(
+  // ローカルフィルタリング + 除外対象を除去
+  const filteredSuggestions = filterCards(query).filter(
     (s) => !excludeCardIds.includes(s.id)
   )
+  const isLoading = !isLoaded
 
   // 外部クリックで閉じる
   useEffect(() => {
@@ -51,18 +52,11 @@ export function CardSearchInput({
 
   function handleChange(value: string) {
     setQuery(value)
-    if (value.trim()) {
-      search(value)
-      setShowResults(true)
-    } else {
-      clear()
-      setShowResults(false)
-    }
+    setShowResults(value.trim().length > 0)
   }
 
   function handleSelect(card: CardMentionSuggestion) {
     setQuery("")
-    clear()
     setShowResults(false)
     onSelect(card)
   }
