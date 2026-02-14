@@ -49,13 +49,14 @@ export function useCardSearch({
         return
       }
 
+      // デバウンス待ち中もローディングUIを表示
+      setIsLoading(true)
+      setError(null)
+
       // デバウンス
       timeoutRef.current = setTimeout(async () => {
         // リクエストIDをインクリメント（古いリクエストの結果を無視するため）
         const currentRequestId = ++requestIdRef.current
-
-        setIsLoading(true)
-        setError(null)
 
         const result = await searchCardsForMention(projectId, query.trim())
 
