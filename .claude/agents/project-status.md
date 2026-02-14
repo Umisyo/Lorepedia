@@ -54,23 +54,7 @@ gh pr list --state all -L 5
 gh pr view 2>/dev/null || echo "現在のブランチにPRはありません"
 ```
 
-### 2. タスク進捗 (Notion)
-
-task-managerと同じData Source IDを使用：
-
-```
-notion-search({
-  query: "タスク",
-  data_source_url: "collection://0b8edd28-00fb-428b-b26c-5b1708f9a161"
-})
-```
-
-集計項目：
-- ステータス別の件数（完了/進行中/未着手/保留）
-- 進行中タスクの詳細
-- High優先度の未着手タスク
-
-### 3. コード品質チェック
+### 2. コード品質チェック
 
 ```bash
 # テスト実行（出力を50行に制限）
@@ -85,7 +69,7 @@ npx tsc --noEmit 2>&1 | head -30
 
 **注意**: ビルドチェック（`npm run build`）は時間がかかるため、明示的に要求された場合のみ実行する。
 
-### 4. ナレッジブリーフィング（オプション）
+### 3. ナレッジブリーフィング（オプション）
 
 セッション開始時はExocortexと連携：
 
@@ -116,23 +100,6 @@ exo_session_briefing(project_context="lorepedia")
 
 ---
 
-## タスク進捗
-
-| ステータス | 件数 |
-|-----------|------|
-| 完了 | N |
-| 進行中 | N |
-| 未着手 | N |
-| 保留 | N |
-
-### 進行中タスク
-- [タスク名](URL) - 優先度: 🔴/🟡/🟢
-
-### 次の推奨タスク
-- [タスク名](URL) - 優先度: 🔴 High
-
----
-
 ## コード品質
 
 | チェック | 結果 |
@@ -151,11 +118,6 @@ exo_session_briefing(project_context="lorepedia")
 ## タスク完了確認
 
 - ✅ [完了タスク名] を完了しました
-- 📊 進捗: N/M (X%)
-
-### 次のタスク候補
-1. [タスク名] - 🔴 High
-2. [タスク名] - 🟡 Medium
 
 ### 品質チェック
 - テスト: ✅/❌
@@ -193,16 +155,9 @@ exo_session_briefing(project_context="lorepedia")
 
 ## 既存リソースとの連携
 
-### task-manager
-- **Data Source ID**: `0b8edd28-00fb-428b-b26c-5b1708f9a161`
-- タスク進捗情報の取得に使用
-
 ### lorepedia-knowledge
 - セッションブリーフィングで連携
 - 過去の問題・解決策を参照
-
-### lorepedia-notion
-- 必要に応じて仕様確認に使用
 
 ## 注意事項
 
