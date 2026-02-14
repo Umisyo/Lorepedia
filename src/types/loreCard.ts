@@ -72,6 +72,16 @@ export const referenceTypeDescriptions: Record<ReferenceType, string> = {
   mentions: "この設定に言及している",
 }
 
+// 特定カード向け参照データ（タイトル・方向付き）
+export type CardReferenceWithTitle = {
+  id: string
+  sourceCardId: string
+  targetCardId: string
+  referenceType: ReferenceType
+  relatedCard: { id: string; title: string }
+  direction: "outgoing" | "incoming"
+}
+
 // グラフノードのデータ型
 export type CardNodeData = {
   label: string
