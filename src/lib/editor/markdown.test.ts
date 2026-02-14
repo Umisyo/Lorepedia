@@ -72,6 +72,92 @@ describe("markdown変換ユーティリティ", () => {
       const markdown = htmlToMarkdown(html)
       expect(markdown).toBe("@[Test Card](card:card-123)")
     })
+
+    describe("テーブル変換", () => {
+      it("Tiptap形式（<tbody>内の<th>）のテーブルを正しく変換する", () => {
+        const html = `
+          <table>
+            <tbody>
+              <tr><th>名前</th><th>種族</th></tr>
+              <tr><td>太郎</td><td>人間</td></tr>
+              <tr><td>花子</td><td>エルフ</td></tr>
+            </tbody>
+          </table>
+        `
+        const result = htmlToMarkdown(html)
+        expect(result).toContain("| 名前 | 種族 |")
+        expect(result).toContain("| --- | --- |")
+        expect(result).toContain("| 太郎 | 人間 |")
+        expect(result).toContain("| 花子 | エルフ |")
+      })
+
+      it("従来の<thead>形式のテーブルも正しく変換する", () => {
+        const html = `
+          <table>
+            <thead>
+              <tr><th>項目</th><th>値</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A</td><td>1</td></tr>
+            </tbody>
+          </table>
+        `
+        const result = htmlToMarkdown(html)
+        expect(result).toContain("| 項目 | 値 |")
+        expect(result).toContain("| --- | --- |")
+        expect(result).toContain("| A | 1 |")
+      })
+
+      it("<colgroup>/<col>を含むテーブルを正しく変換する", () => {
+        const html = `
+          <table>
+            <colgroup>
+              <col style="width: 50%">
+              <col style="width: 50%">
+            </colgroup>
+            <tbody>
+              <tr><th>列1</th><th>列2</th></tr>
+              <tr><td>データ1</td><td>データ2</td></tr>
+            </tbody>
+          </table>
+        `
+        const result = htmlToMarkdown(html)
+        expect(result).toContain("| 列1 | 列2 |")
+        expect(result).toContain("| --- | --- |")
+        expect(result).toContain("| データ1 | データ2 |")
+        // colgroup/colの痕跡がないことを確認
+        expect(result).not.toContain("colgroup")
+        expect(result).not.toContain("col")
+      })
+
+      it("ヘッダーなし（<td>のみ）のテーブルは区切り行を生成しない", () => {
+        const html = `
+          <table>
+            <tbody>
+              <tr><td>A</td><td>B</td></tr>
+              <tr><td>C</td><td>D</td></tr>
+            </tbody>
+          </table>
+        `
+        const result = htmlToMarkdown(html)
+        expect(result).toContain("| A | B |")
+        expect(result).toContain("| C | D |")
+        expect(result).not.toContain("| --- | --- |")
+      })
+
+      it("3列のテーブルで正しい数の区切りを生成する", () => {
+        const html = `
+          <table>
+            <tbody>
+              <tr><th>A</th><th>B</th><th>C</th></tr>
+              <tr><td>1</td><td>2</td><td>3</td></tr>
+            </tbody>
+          </table>
+        `
+        const result = htmlToMarkdown(html)
+        expect(result).toContain("| --- | --- | --- |")
+      })
+    })
   })
 
   describe("markdownToHtml", () => {

@@ -155,4 +155,20 @@ describe("MarkdownRenderer", () => {
       expect(link).toHaveAttribute("href", "https://example.com")
     })
   })
+
+  describe("壊れたテーブルの自動修正", () => {
+    it("区切り行がないテーブルをレンダリングできる", () => {
+      // DB内に既に保存されている壊れたテーブルMarkdown（区切り行なし）
+      const brokenTable = `| ヘッダー1 | ヘッダー2 |
+| データ1 | データ2 |
+| データ3 | データ4 |`
+      const { container } = render(
+        <MarkdownRenderer content={brokenTable} />
+      )
+
+      expect(container.querySelector("table")).toBeInTheDocument()
+      expect(container.querySelectorAll("th")).toHaveLength(2)
+      expect(container.querySelectorAll("td")).toHaveLength(4)
+    })
+  })
 })
