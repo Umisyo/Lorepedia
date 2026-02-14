@@ -34,7 +34,7 @@ export default async function NewCardPage({ params }: Props) {
   const availableTags = tagsResult.success ? tagsResult.data ?? [] : []
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-8">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       {/* ヘッダー */}
       <div className="mb-8">
         <Link

@@ -4,8 +4,10 @@ import { ArrowLeft } from "lucide-react"
 
 import { createClient } from "@/utils/supabase/server"
 import { getLoreCard, getProject } from "@/app/actions/loreCard"
+import { getCardReferencesForCard } from "@/app/actions/cardReference"
 import { getProjectTags } from "@/app/actions/tag"
 import { LoreCardForm } from "@/components/features/LoreCardForm"
+import { CardReferenceSection } from "@/components/features/CardReferenceSection"
 
 type Props = {
   params: Promise<{ projectId: string; cardId: string }>
@@ -37,13 +39,17 @@ export default async function EditCardPage({ params }: Props) {
     redirect(`/projects/${projectId}/cards/${cardId}`)
   }
 
-  // カード詳細取得（プロジェクトIDでスコープ）
-  const result = await getLoreCard(projectId, cardId)
+  // カード詳細と参照データを並行取得
+  const [result, referencesResult] = await Promise.all([
+    getLoreCard(projectId, cardId),
+    getCardReferencesForCard(cardId),
+  ])
   if (!result.success || !result.data) {
     notFound()
   }
 
   const card = result.data
+  const references = referencesResult.success ? (referencesResult.data ?? []) : []
 
   // タグ一覧取得
   const tagsResult = await getProjectTags(projectId)
@@ -77,6 +83,15 @@ export default async function EditCardPage({ params }: Props) {
           tagIds: currentTagIds,
         }}
         availableTags={availableTags}
+      />
+
+      {/* 参照関係 */}
+      <hr className="my-8 border-border" />
+      <CardReferenceSection
+        projectId={projectId}
+        cardId={cardId}
+        initialReferences={references}
+        isEditor={true}
       />
     </div>
   )

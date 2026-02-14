@@ -146,7 +146,7 @@ describe("LoreCardForm", () => {
   })
 
   describe("作成モード", () => {
-    it("正常に送信されるとカード詳細ページにリダイレクトされる", async () => {
+    it("正常に送信されるとカード編集ページにリダイレクトされる", async () => {
       mockCreateLoreCard.mockResolvedValueOnce({
         success: true,
         data: { id: "new-card-id" },
@@ -176,7 +176,7 @@ describe("LoreCardForm", () => {
       })
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/projects/project-1/cards/new-card-id")
+        expect(mockPush).toHaveBeenCalledWith("/projects/project-1/cards/new-card-id/edit")
       })
     })
 
