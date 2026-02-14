@@ -4,18 +4,14 @@ import { ja } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MarkdownRenderer } from "@/components/features/MarkdownRenderer"
-import { CardReferenceSection } from "@/components/features/CardReferenceSection"
-import type { LoreCardWithRelations, CardReferenceWithTitle } from "@/types/loreCard"
+import type { LoreCardWithRelations } from "@/types/loreCard"
 
 type Props = {
   card: LoreCardWithRelations
   projectId: string
-  cardId?: string
-  references?: CardReferenceWithTitle[]
-  isEditor?: boolean
 }
 
-export function LoreCardDetail({ card, projectId, cardId, references, isEditor }: Props) {
+export function LoreCardDetail({ card, projectId }: Props) {
   const createdAt = formatDistanceToNow(new Date(card.created_at), {
     addSuffix: true,
     locale: ja,
@@ -71,19 +67,6 @@ export function LoreCardDetail({ card, projectId, cardId, references, isEditor }
       {/* 詳細内容（Markdown対応） */}
       {card.content && (
         <MarkdownRenderer content={card.content} projectId={projectId} />
-      )}
-
-      {/* 関連カード */}
-      {cardId && references && (
-        <>
-          <hr className="border-border" />
-          <CardReferenceSection
-            projectId={projectId}
-            cardId={cardId}
-            initialReferences={references}
-            isEditor={isEditor ?? false}
-          />
-        </>
       )}
     </div>
   )

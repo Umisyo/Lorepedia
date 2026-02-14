@@ -30,14 +30,21 @@ function CardNodeComponent({ data }: NodeProps) {
     return null
   }
 
+  const cardUrl = `/projects/${data.projectId}/cards/${data.cardId}`
+
   const handleClick = () => {
-    router.push(`/projects/${data.projectId}/cards/${data.cardId}`)
+    router.push(cardUrl)
+  }
+
+  const handleMouseEnter = () => {
+    router.prefetch(cardUrl)
   }
 
   return (
     <div
       className="cursor-pointer rounded-lg border bg-card px-4 py-3 shadow-sm transition-shadow hover:shadow-md"
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           handleClick()

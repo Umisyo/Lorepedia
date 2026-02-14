@@ -1,15 +1,33 @@
+import { Suspense } from "react"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Pencil } from "lucide-react"
+import { ArrowLeft, Pencil, Link2 } from "lucide-react"
 
 import { createClient } from "@/utils/supabase/server"
 import { getLoreCard, getProject } from "@/app/actions/loreCard"
-import { getCardReferencesForCard } from "@/app/actions/cardReference"
 import { LoreCardDetail } from "@/components/features/LoreCardDetail"
+import { CardReferenceSectionLoader } from "@/components/features/CardReferenceSectionLoader"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type Props = {
   params: Promise<{ projectId: string; cardId: string }>
+}
+
+// 参照セクションのスケルトン
+function ReferenceSectionSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Link2 className="h-5 w-5 text-muted-foreground" />
+        <Skeleton className="h-6 w-24" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </div>
+  )
 }
 
 export default async function CardDetailPage({ params }: Props) {
@@ -24,28 +42,22 @@ export default async function CardDetailPage({ params }: Props) {
     redirect("/login")
   }
 
-  // プロジェクト情報取得
-  const project = await getProject(projectId)
+  // データフェッチを並列化
+  const [project, editorResult, result] = await Promise.all([
+    getProject(projectId),
+    supabase.rpc("is_project_editor", { p_project_id: projectId }),
+    getLoreCard(projectId, cardId),
+  ])
+
   if (!project) {
     redirect("/dashboard")
   }
-
-  // 権限チェック（編集ボタン表示用）
-  const { data: isEditor } = await supabase.rpc("is_project_editor", {
-    p_project_id: projectId,
-  })
-
-  // カード詳細取得（プロジェクトIDでスコープ）
-  const [result, referencesResult] = await Promise.all([
-    getLoreCard(projectId, cardId),
-    getCardReferencesForCard(cardId),
-  ])
   if (!result.success || !result.data) {
     notFound()
   }
 
   const card = result.data
-  const references = referencesResult.success ? (referencesResult.data ?? []) : []
+  const isEditor = editorResult.data ?? false
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -69,13 +81,19 @@ export default async function CardDetailPage({ params }: Props) {
       </div>
 
       {/* カード詳細 */}
-      <LoreCardDetail
-        card={card}
-        projectId={projectId}
-        cardId={cardId}
-        references={references}
-        isEditor={isEditor ?? false}
-      />
+      <LoreCardDetail card={card} projectId={projectId} />
+
+      {/* 参照セクション（ストリーミング） */}
+      <div className="mt-6">
+        <hr className="border-border mb-6" />
+        <Suspense fallback={<ReferenceSectionSkeleton />}>
+          <CardReferenceSectionLoader
+            projectId={projectId}
+            cardId={cardId}
+            isEditor={isEditor}
+          />
+        </Suspense>
+      </div>
     </div>
   )
 }
