@@ -105,7 +105,7 @@ export function LoreCardForm({
             return
           }
         }
-        router.push(`/projects/${projectId}/cards/${result.data.id}`)
+        router.push(`/projects/${projectId}/cards/${result.data.id}/edit`)
       } else {
         setFormError(result.error || "カードの作成に失敗しました")
         setIsSubmitting(false)
