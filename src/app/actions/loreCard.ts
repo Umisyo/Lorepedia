@@ -598,7 +598,7 @@ export type CardMentionSuggestion = {
 // @メンション用カード検索
 export async function searchCardsForMention(
   projectId: string,
-  query: string
+  query?: string
 ): Promise<LoreCardActionResult<CardMentionSuggestion[]>> {
   const supabase = await createClient()
 
@@ -609,16 +609,21 @@ export async function searchCardsForMention(
     return { success: false, error: "ログインが必要です" }
   }
 
-  // タイトルで部分一致検索（最大10件）
-  // ワイルドカード文字をエスケープしてSQLインジェクション対策
-  const escapedQuery = query.replace(/[%_\\]/g, "\\$&")
-  const { data: cards, error } = await supabase
+  // ローカルフィルタ用に全件取得（メンションサジェスト用途のためid,titleのみ取得で軽量）
+  let queryBuilder = supabase
     .from("lore_cards")
     .select("id, title")
     .eq("project_id", projectId)
-    .ilike("title", `%${escapedQuery}%`)
     .order("title")
-    .limit(10)
+    .limit(1000)
+
+  if (query?.trim()) {
+    // ワイルドカード文字をエスケープしてSQLインジェクション対策
+    const escapedQuery = query.trim().replace(/[%_\\]/g, "\\$&")
+    queryBuilder = queryBuilder.ilike("title", `%${escapedQuery}%`)
+  }
+
+  const { data: cards, error } = await queryBuilder
 
   if (error) {
     console.error("Failed to search cards for mention:", error)

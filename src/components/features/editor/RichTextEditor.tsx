@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback, useRef } from "react"
+import { useMemo, useCallback } from "react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Link from "@tiptap/extension-link"
@@ -17,7 +17,6 @@ import { createCardMentionSuggestion } from "./extensions/cardMentionSuggestion"
 import { cn } from "@/lib/utils"
 import { htmlToMarkdown, prepareContentForEditor } from "@/lib/editor/markdown"
 import { useCardSearch } from "@/hooks/useCardSearch"
-import type { CardMentionSuggestion } from "@/app/actions/loreCard"
 
 // シンタックスハイライト用のlowlightインスタンス
 const lowlight = createLowlight(common)
@@ -49,18 +48,11 @@ export function RichTextEditor({
   )
 
   // カード検索（projectIdがある場合のみ有効）
-  const { suggestions, isLoading, search } = useCardSearch({
+  const { filterCards, isLoaded } = useCardSearch({
     projectId: projectId ?? "",
   })
 
-  // サジェスト結果をrefで管理（suggestion.itemsからアクセスするため）
-  const suggestionsRef = useRef<CardMentionSuggestion[]>([])
-  const isLoadingRef = useRef(false)
-  suggestionsRef.current = suggestions
-  isLoadingRef.current = isLoading
-
-  const getSuggestions = useCallback(() => suggestionsRef.current, [])
-  const getIsLoading = useCallback(() => isLoadingRef.current, [])
+  const getIsLoaded = useCallback(() => isLoaded, [isLoaded])
 
   // Mention拡張（projectIdがある場合のみ有効化）
   const mentionExtension = useMemo(() => {
@@ -73,15 +65,14 @@ export function RichTextEditor({
       },
       suggestion: createCardMentionSuggestion({
         projectId,
-        onSearch: search,
-        getSuggestions,
-        isLoading: getIsLoading,
+        filterCards,
+        isLoaded: getIsLoaded,
       }),
       renderText({ node }) {
         return `@${node.attrs.label ?? ""}`
       },
     })
-  }, [projectId, search, getSuggestions, getIsLoading])
+  }, [projectId, filterCards, getIsLoaded])
 
   const extensions = useMemo(() => {
     const baseExtensions = [

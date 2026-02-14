@@ -2,72 +2,61 @@ import { describe, it, expect, vi } from "vitest"
 import { createCardMentionSuggestion } from "./cardMentionSuggestion"
 
 describe("createCardMentionSuggestion", () => {
+  const mockCards = [
+    { id: "1", title: "勇者の剣" },
+    { id: "2", title: "魔法の杖" },
+    { id: "3", title: "勇者の盾" },
+  ]
+
   function createMockOptions() {
     return {
       projectId: "test-project",
-      onSearch: vi.fn(),
-      getSuggestions: vi.fn().mockReturnValue([]),
-      isLoading: vi.fn().mockReturnValue(false),
+      filterCards: vi.fn().mockReturnValue(mockCards),
+      isLoaded: vi.fn().mockReturnValue(true),
     }
   }
 
   describe("items", () => {
-    it("クエリが変わった場合にonSearchが呼ばれる", () => {
+    it("filterCardsにクエリを渡して結果を返す", () => {
       const options = createMockOptions()
       const suggestion = createCardMentionSuggestion(options)
 
-      suggestion.items({ query: "テスト", editor: {} as never })
+      const result = suggestion.items({ query: "勇者", editor: {} as never })
 
-      expect(options.onSearch).toHaveBeenCalledWith("テスト")
-      expect(options.onSearch).toHaveBeenCalledTimes(1)
+      expect(options.filterCards).toHaveBeenCalledWith("勇者")
+      expect(result).toEqual(mockCards)
     })
 
-    it("同一クエリの連続呼び出しではonSearchが重複実行されない", () => {
+    it("空クエリでもfilterCardsが呼ばれる", () => {
       const options = createMockOptions()
       const suggestion = createCardMentionSuggestion(options)
 
-      suggestion.items({ query: "テスト", editor: {} as never })
-      suggestion.items({ query: "テスト", editor: {} as never })
-      suggestion.items({ query: "テスト", editor: {} as never })
+      suggestion.items({ query: "", editor: {} as never })
 
-      expect(options.onSearch).toHaveBeenCalledTimes(1)
+      expect(options.filterCards).toHaveBeenCalledWith("")
     })
 
-    it("異なるクエリの場合はonSearchが再度呼ばれる", () => {
+    it("連続呼び出しで毎回filterCardsが呼ばれる", () => {
       const options = createMockOptions()
       const suggestion = createCardMentionSuggestion(options)
 
       suggestion.items({ query: "テスト", editor: {} as never })
       suggestion.items({ query: "テスト2", editor: {} as never })
 
-      expect(options.onSearch).toHaveBeenCalledTimes(2)
-      expect(options.onSearch).toHaveBeenNthCalledWith(1, "テスト")
-      expect(options.onSearch).toHaveBeenNthCalledWith(2, "テスト2")
+      expect(options.filterCards).toHaveBeenCalledTimes(2)
+      expect(options.filterCards).toHaveBeenNthCalledWith(1, "テスト")
+      expect(options.filterCards).toHaveBeenNthCalledWith(2, "テスト2")
     })
 
-    it("空文字列のクエリでもonSearchが呼ばれる", () => {
+    it("filterCardsの戻り値をそのまま返す", () => {
+      const filteredCards = [{ id: "1", title: "勇者の剣" }]
       const options = createMockOptions()
+      options.filterCards.mockReturnValue(filteredCards)
       const suggestion = createCardMentionSuggestion(options)
 
-      // 初回は空文字（lastQueryの初期値""と同じ）なのでスキップされる
-      suggestion.items({ query: "", editor: {} as never })
-      expect(options.onSearch).not.toHaveBeenCalled()
+      const result = suggestion.items({ query: "勇者", editor: {} as never })
 
-      // テキスト入力後に空文字に戻った場合は呼ばれる
-      suggestion.items({ query: "a", editor: {} as never })
-      suggestion.items({ query: "", editor: {} as never })
-      expect(options.onSearch).toHaveBeenCalledTimes(2)
-    })
-
-    it("毎回getSuggestionsの結果を返す", () => {
-      const mockSuggestions = [{ id: "1", title: "カード1" }]
-      const options = createMockOptions()
-      options.getSuggestions.mockReturnValue(mockSuggestions)
-      const suggestion = createCardMentionSuggestion(options)
-
-      const result = suggestion.items({ query: "テスト", editor: {} as never })
-
-      expect(result).toEqual(mockSuggestions)
+      expect(result).toEqual(filteredCards)
     })
   })
 })
