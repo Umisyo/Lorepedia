@@ -609,12 +609,13 @@ export async function searchCardsForMention(
     return { success: false, error: "ログインが必要です" }
   }
 
+  // ローカルフィルタ用に全件取得（メンションサジェスト用途のためid,titleのみ取得で軽量）
   let queryBuilder = supabase
     .from("lore_cards")
     .select("id, title")
     .eq("project_id", projectId)
     .order("title")
-    .limit(50)
+    .limit(1000)
 
   if (query?.trim()) {
     // ワイルドカード文字をエスケープしてSQLインジェクション対策

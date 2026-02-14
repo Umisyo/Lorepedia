@@ -88,6 +88,40 @@ describe("useCardSearch", () => {
     expect(allResults).toHaveLength(0)
   })
 
+  it("projectId変更時にキャッシュがクリアされ再フェッチされる", async () => {
+    const newCards = [{ id: "4", title: "新しいカード" }]
+
+    const { result, rerender } = renderHook(
+      ({ projectId }) => useCardSearch({ projectId }),
+      { initialProps: { projectId: "project-1" } }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isLoaded).toBe(true)
+    })
+
+    expect(result.current.filterCards("")).toHaveLength(3)
+
+    // projectId変更時に新しいデータを返す
+    mockSearchCardsForMention.mockResolvedValue({
+      success: true,
+      data: newCards,
+    })
+
+    rerender({ projectId: "project-2" })
+
+    // キャッシュがクリアされ、isLoadedがfalseにリセットされる
+    expect(result.current.isLoaded).toBe(false)
+    expect(result.current.filterCards("")).toHaveLength(0)
+
+    await waitFor(() => {
+      expect(result.current.isLoaded).toBe(true)
+    })
+
+    expect(result.current.filterCards("")).toEqual(newCards)
+    expect(mockSearchCardsForMention).toHaveBeenCalledWith("project-2")
+  })
+
   it("フェッチが失敗してもisLoadedがtrueになる", async () => {
     mockSearchCardsForMention.mockResolvedValue({
       success: false,

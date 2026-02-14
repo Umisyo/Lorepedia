@@ -25,9 +25,15 @@ export function useCardSearch({
   projectId,
 }: UseCardSearchOptions): UseCardSearchReturn {
   const allCardsRef = useRef<CardMentionSuggestion[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [loadedProjectId, setLoadedProjectId] = useState<string | null>(null)
+
+  // projectIdが一致していれば読み込み完了（派生状態）
+  const isLoaded = loadedProjectId === projectId
 
   useEffect(() => {
+    // projectId変更時にstaleなデータをクリア
+    allCardsRef.current = []
+
     if (!projectId) return
 
     let cancelled = false
@@ -37,7 +43,7 @@ export function useCardSearch({
       if (result.success && result.data) {
         allCardsRef.current = result.data
       }
-      setIsLoaded(true)
+      setLoadedProjectId(projectId)
     })
 
     return () => {
