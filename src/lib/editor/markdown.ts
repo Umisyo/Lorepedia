@@ -21,12 +21,14 @@ turndownService.addRule("tableCell", {
 turndownService.addRule("tableRow", {
   filter: "tr",
   replacement: (content, node) => {
-    const isHeader = node.parentElement?.tagName === "THEAD"
+    // Tiptapは<thead>を使わず<tbody>内に直接<th>を配置するため、
+    // <th>要素の存在でヘッダー行を判定する
+    const cells = node.querySelectorAll("th, td")
+    const hasHeaderCells = node.querySelectorAll("th").length > 0
     let row = `|${content}\n`
 
-    if (isHeader) {
-      const cellCount = node.querySelectorAll("th, td").length
-      row += "|" + " --- |".repeat(cellCount) + "\n"
+    if (hasHeaderCells) {
+      row += "|" + " --- |".repeat(cells.length) + "\n"
     }
 
     return row
@@ -38,6 +40,12 @@ turndownService.addRule("table", {
   replacement: (content) => {
     return `\n${content}\n`
   },
+})
+
+// colgroup/col要素を除外（Tiptapのresizableテーブルが生成する）
+turndownService.addRule("colgroup", {
+  filter: ["colgroup", "col"],
+  replacement: () => "",
 })
 
 // 画像対応のカスタムルール

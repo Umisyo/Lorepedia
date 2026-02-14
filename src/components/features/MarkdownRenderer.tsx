@@ -79,6 +79,35 @@ function removeAtBeforeCardLinks(children: React.ReactNode): React.ReactNode {
   return result
 }
 
+/**
+ * 区切り行が欠落した壊れたテーブルMarkdownを自動修正する前処理関数
+ * DB内に既に保存されている壊れたデータとの互換性を保つために必要
+ */
+function fixBrokenTables(content: string): string {
+  const lines = content.split("\n")
+  const result: string[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const currentLine = lines[i].trim()
+    const nextLine = lines[i + 1]?.trim() ?? ""
+
+    result.push(lines[i])
+
+    const isTableRow = /^\|(.+\|)+\s*$/.test(currentLine)
+    const nextIsTableRow = /^\|(.+\|)+\s*$/.test(nextLine)
+    const nextIsSeparator = /^\|(\s*:?-+:?\s*\|)+\s*$/.test(nextLine)
+    const prevLine = result.length >= 2 ? result[result.length - 2]?.trim() ?? "" : ""
+    const prevIsTableRow = /^\|(.+\|)+\s*$/.test(prevLine)
+
+    if (isTableRow && nextIsTableRow && !nextIsSeparator && !prevIsTableRow) {
+      const cellCount = (currentLine.match(/\|/g)?.length ?? 1) - 1
+      result.push("|" + " --- |".repeat(cellCount))
+    }
+  }
+
+  return result.join("\n")
+}
+
 // rehype-sanitize用のカスタムスキーマ（card:スキームとGFM要素を許可）
 const customSanitizeSchema = {
   ...defaultSchema,
@@ -210,7 +239,7 @@ export function MarkdownRenderer({ content, projectId, className }: Props) {
         ]}
         components={customComponents}
       >
-        {content}
+        {fixBrokenTables(content)}
       </ReactMarkdown>
     </div>
   )
