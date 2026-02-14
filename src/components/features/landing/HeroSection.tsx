@@ -15,7 +15,7 @@ export function HeroSection() {
       </h1>
       <p className="mb-10 max-w-2xl text-lg text-muted-foreground md:text-xl">
         Lorepediaは、複数の創作者が一つの世界観を共同で構築するための
-        プラットフォームです。設定カードの作成・管理・AI支援で、
+        プラットフォームです。設定カードの作成・管理で、
         あなたの創作をもっと豊かに。
       </p>
       <div className="flex flex-col gap-4 sm:flex-row">
