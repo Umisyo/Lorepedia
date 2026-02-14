@@ -44,3 +44,11 @@ export type UserSearchResult = {
   displayName: string | null
   avatarUrl: string | null
 }
+
+// Explore用プロジェクト型
+export type ExploreProject = Project & {
+  tags: string[]
+  memberCount: number
+  ownerName: string | null
+  isMember: boolean
+}

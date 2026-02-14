@@ -5,6 +5,7 @@ import { Plus } from "lucide-react"
 import { createClient } from "@/utils/supabase/server"
 import { Button } from "@/components/ui/button"
 import { ProjectCard } from "@/components/features/ProjectCard"
+import { LeaveProjectButton } from "@/components/features/LeaveProjectButton"
 import { EmptyState } from "@/components/features/EmptyState"
 import type { ProjectWithMeta, MemberRole, Project } from "@/types/project"
 
@@ -156,7 +157,17 @@ export default async function DashboardPage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {result.projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <div key={project.id} className="relative">
+              <ProjectCard project={project} />
+              {project.myRole === "viewer" && (
+                <div className="absolute right-2 top-2 z-10">
+                  <LeaveProjectButton
+                    projectId={project.id}
+                    projectName={project.name}
+                  />
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

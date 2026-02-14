@@ -13,12 +13,13 @@ type Props = {
 
 // ナビゲーションリンクの定義（拡張可能な配列で管理）
 const getNavItems = (isLoggedIn: boolean): NavItem[] => {
+  const items: NavItem[] = [
+    { href: "/explore", label: "プロジェクトを探す" },
+  ]
   if (isLoggedIn) {
-    return [
-      { href: "/dashboard", label: "ダッシュボード" },
-    ]
+    items.push({ href: "/dashboard", label: "ダッシュボード" })
   }
-  return []
+  return items
 }
 
 // 全ページ共通のヘッダーコンポーネント
