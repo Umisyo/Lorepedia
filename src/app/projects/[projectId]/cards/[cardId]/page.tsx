@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil } from "lucide-react"
 
 import { createClient } from "@/utils/supabase/server"
 import { getLoreCard, getProject } from "@/app/actions/loreCard"
+import { getCardReferencesForCard } from "@/app/actions/cardReference"
 import { LoreCardDetail } from "@/components/features/LoreCardDetail"
 import { Button } from "@/components/ui/button"
 
@@ -35,12 +36,16 @@ export default async function CardDetailPage({ params }: Props) {
   })
 
   // カード詳細取得（プロジェクトIDでスコープ）
-  const result = await getLoreCard(projectId, cardId)
+  const [result, referencesResult] = await Promise.all([
+    getLoreCard(projectId, cardId),
+    getCardReferencesForCard(cardId),
+  ])
   if (!result.success || !result.data) {
     notFound()
   }
 
   const card = result.data
+  const references = referencesResult.success ? (referencesResult.data ?? []) : []
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -64,7 +69,13 @@ export default async function CardDetailPage({ params }: Props) {
       </div>
 
       {/* カード詳細 */}
-      <LoreCardDetail card={card} projectId={projectId} />
+      <LoreCardDetail
+        card={card}
+        projectId={projectId}
+        cardId={cardId}
+        references={references}
+        isEditor={isEditor ?? false}
+      />
     </div>
   )
 }
