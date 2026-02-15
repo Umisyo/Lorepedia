@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback } from "react"
+import { useMemo, useCallback, useRef } from "react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Link from "@tiptap/extension-link"
@@ -52,7 +52,11 @@ export function RichTextEditor({
     projectId: projectId ?? "",
   })
 
-  const getIsLoaded = useCallback(() => isLoaded, [isLoaded])
+  // Tiptap extensionはエディタ作成時のクロージャを保持するため、
+  // refを使って常に最新のisLoadedを参照できるようにする
+  const isLoadedRef = useRef(false)
+  isLoadedRef.current = isLoaded
+  const getIsLoaded = useCallback(() => isLoadedRef.current, [])
 
   // Mention拡張（projectIdがある場合のみ有効化）
   const mentionExtension = useMemo(() => {
@@ -72,7 +76,9 @@ export function RichTextEditor({
         return `@${node.attrs.label ?? ""}`
       },
     })
-  }, [projectId, filterCards, getIsLoaded])
+    // getIsLoadedはrefベースで安定した参照のため依存不要
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, filterCards])
 
   const extensions = useMemo(() => {
     const baseExtensions = [
