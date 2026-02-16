@@ -38,7 +38,7 @@ export function Header({ user, onLogout }: Props) {
             alt="Lorepedia"
             width={120}
             height={120}
-            className="h-8 w-auto invert dark:invert-0"
+            className="h-8 w-auto brightness-0 dark:brightness-100"
             priority
           />
         </Link>

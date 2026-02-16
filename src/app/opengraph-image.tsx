@@ -20,7 +20,7 @@ export default async function Image() {
           justifyContent: "center",
           width: "100%",
           height: "100%",
-          backgroundColor: "#ffffff",
+          backgroundColor: "#0a0a0a",
         }}
       >
         <img src={logoBase64} alt="" width={400} height={400} />
