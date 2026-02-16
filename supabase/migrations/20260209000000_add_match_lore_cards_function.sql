@@ -1,3 +1,6 @@
+-- extensionsスキーマを検索パスに追加（vector型を解決するため）
+SET search_path TO public, extensions;
+
 -- ベクトル類似度検索用のRPC関数
 CREATE OR REPLACE FUNCTION match_lore_cards(
   query_embedding vector(1536),
