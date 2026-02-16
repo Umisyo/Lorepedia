@@ -12,7 +12,7 @@ export function HeroSection() {
           alt="Lorepedia"
           width={1024}
           height={1024}
-          className="h-32 w-auto dark:invert"
+          className="h-32 w-auto invert dark:invert-0"
           priority
         />
       </div>
