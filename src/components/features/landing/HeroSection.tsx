@@ -1,12 +1,20 @@
+import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, BookOpen } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function HeroSection() {
   return (
     <section className="flex flex-col items-center justify-center px-4 py-24 text-center md:py-32">
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-        <BookOpen className="h-8 w-8 text-primary" />
+      <div className="mb-6">
+        <Image
+          src="/logo.png"
+          alt="Lorepedia"
+          width={1024}
+          height={1024}
+          className="h-32 w-auto dark:invert"
+          priority
+        />
       </div>
       <h1 className="mb-6 max-w-3xl text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
         シェアード・ワールドを
