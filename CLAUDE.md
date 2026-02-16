@@ -179,6 +179,29 @@ docs/対象         # ドキュメント
 - **技術要素**: `nextjs`, `react`, `supabase`, `typescript` 等
 - **機能領域**: `form`, `auth`, `database`, `ui`, `api` 等
 
+### ローカル検証環境
+
+**UI動作確認にはローカルSupabase（`supabase start`）を使用する。** Vercel本番環境へのログインは不要。
+
+#### セットアップ
+
+```bash
+pnpm db:start                    # ローカルSupabase起動
+pnpm db:reset                    # DB初期化 + シードデータ投入
+# .env.local に .env.local.example のローカル開発値を設定
+pnpm dev                         # 開発サーバー起動
+```
+
+#### シードデータ（`supabase/seed.sql`）
+
+| ユーザー | メール | パスワード | 用途 |
+|---------|--------|-----------|------|
+| Alice | alice@example.com | password123 | オーナー権限の検証 |
+| Bob | bob@example.com | password123 | エディター権限・複数プロジェクト |
+| Charlie | charlie@example.com | password123 | オンボーディングフロー検証（未完了状態） |
+
+プロジェクト2件、ロアカード6件、タグ・参照関係・いいねも投入済み。
+
 ### 実装フロー（必須手順）
 
 ```
@@ -240,6 +263,8 @@ pnpm test         # テスト実行（watchモード）
 pnpm test:run     # テスト実行（単発）
 pnpm storybook    # Storybook起動
 pnpm supabase:types  # Supabase型生成
+pnpm db:start     # ローカルSupabase起動
+pnpm db:reset     # DB初期化 + シードデータ投入
 ```
 
 ---
