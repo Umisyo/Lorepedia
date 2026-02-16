@@ -47,16 +47,23 @@ git worktree list
 git worktree add ../Lorepedia-<branch-name> -b <branch-name> main
 ```
 
-### 3. 環境変数ファイルのシンボリックリンク作成
+### 3. シンボリックリンクの作成
 
-worktree間で`.env`を共有するため、メインリポジトリの`.env`へシンボリックリンクを作成:
+worktree間で`.env`とClaude Code設定を共有するため、メインリポジトリへのシンボリックリンクを作成:
 
 ```bash
 cd ../Lorepedia-<branch-name>
 
-# メインリポジトリ（最初のworktree）のパスを動的に取得してリンク
+# メインリポジトリ（最初のworktree）のパスを動的に取得
 MAIN_REPO=$(git worktree list --porcelain | grep "^worktree " | head -1 | sed 's/worktree //')
+
+# .env のシンボリックリンク
 ln -s "$MAIN_REPO/.env" .env
+
+# Claude Code権限設定のシンボリックリンク
+if [ -f "$MAIN_REPO/.claude/settings.local.json" ]; then
+  ln -sf "$MAIN_REPO/.claude/settings.local.json" .claude/settings.local.json
+fi
 ```
 
 ### 4. 依存関係のインストール
@@ -88,7 +95,7 @@ User: /worktree-create feature/add-world-list
 Assistant:
 1. git status で現在の状態を確認
 2. git worktree add ../Lorepedia-feature-add-world-list -b feature/add-world-list main を実行
-3. ln -s でメインリポジトリの.envへシンボリックリンクを作成
+3. ln -s でメインリポジトリの.envと.claude/settings.local.jsonへシンボリックリンクを作成
 4. pnpm install を実行
 5. 作業ディレクトリ: /path/to/Lorepedia-feature-add-world-list
    次のステップ: 実装を開始してください
