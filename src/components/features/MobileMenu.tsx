@@ -57,7 +57,7 @@ export function MobileMenu({ navItems, user, onLogout }: Props) {
           {user ? (
             <div className="flex items-center gap-4 pt-4 border-t">
               <UserMenu user={user} onLogout={onLogout} />
-              <span className="text-sm text-muted-foreground">{user.email}</span>
+              <span className="text-sm text-muted-foreground">{user.displayName || user.email}</span>
             </div>
           ) : (
             <div className="flex flex-col gap-2 pt-4 border-t">

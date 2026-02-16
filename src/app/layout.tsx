@@ -33,12 +33,24 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
+  // プロフィールから表示名を取得
+  let displayName: string | null = null
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single()
+    displayName = profile?.display_name ?? null
+  }
+
   // Headerに渡すユーザー情報を整形
   // emailが存在しない場合は未認証扱いとする
   const headerUser =
     user && user.email
       ? {
           email: user.email,
+          displayName,
           avatarUrl: user.user_metadata?.avatar_url ?? null,
         }
       : null

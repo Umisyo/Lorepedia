@@ -9,5 +9,6 @@ export type NavItem = {
 // ユーザー情報の型（ヘッダー表示用）
 export type HeaderUser = {
   email: string
+  displayName?: string | null
   avatarUrl?: string | null
 }
