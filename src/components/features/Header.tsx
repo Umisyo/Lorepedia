@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 
 import { MobileMenu } from "@/components/features/MobileMenu"
@@ -32,7 +33,14 @@ export function Header({ user, onLogout }: Props) {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* ロゴ */}
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold">Lorepedia</span>
+          <Image
+            src="/logo.png"
+            alt="Lorepedia"
+            width={120}
+            height={120}
+            className="h-8 w-auto dark:invert"
+            priority
+          />
         </Link>
 
         {/* デスクトップナビゲーション */}
