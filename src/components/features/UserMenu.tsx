@@ -21,25 +21,30 @@ type Props = {
 
 // ログイン済みユーザー向けのドロップダウンメニュー
 export function UserMenu({ user, onLogout }: Props) {
-  // メールアドレスの最初の文字を取得してアバターのフォールバックに使用
-  const getInitial = (email: string) => {
-    return email.charAt(0).toUpperCase()
+  // 表示名またはメールアドレスの最初の文字を取得してアバターのフォールバックに使用
+  const getInitial = (name: string) => {
+    return name.charAt(0).toUpperCase()
   }
+
+  const displayLabel = user.displayName || user.email
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatarUrl ?? undefined} alt={user.email} />
-            <AvatarFallback>{getInitial(user.email)}</AvatarFallback>
+            <AvatarImage src={user.avatarUrl ?? undefined} alt={displayLabel} />
+            <AvatarFallback>{getInitial(displayLabel)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <div className="flex items-center justify-start gap-2 p-2">
           <div className="flex flex-col space-y-1 leading-none">
-            <p className="font-medium">{user.email}</p>
+            <p className="font-medium">{displayLabel}</p>
+            {user.displayName && (
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+            )}
           </div>
         </div>
         <DropdownMenuSeparator />

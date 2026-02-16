@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
 // 認証が必要なルート
-const protectedRoutes = ["/dashboard"]
+const protectedRoutes = ["/dashboard", "/projects", "/profile"]
 
 // 認証済みの場合にリダイレクトするルート（認証ページ）
 const authRoutes = ["/login", "/signup"]
@@ -68,6 +68,39 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = "/dashboard"
       return NextResponse.redirect(url)
+    }
+  }
+
+  // オンボーディングチェック（認証済みユーザーのみ）
+  if (user) {
+    const isOnboardingPage = pathname === "/onboarding"
+
+    // オンボーディング対象外のルート（認証ページなど）はスキップ
+    const needsOnboardingCheck =
+      protectedRoutes.some(route => pathname.startsWith(route)) || isOnboardingPage
+
+    if (needsOnboardingCheck) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_onboarded")
+        .eq("id", user.id)
+        .single()
+
+      const isOnboarded = profile?.is_onboarded ?? false
+
+      // オンボーディング未完了で保護ルートにアクセス → /onboarding へ
+      if (!isOnboarded && !isOnboardingPage) {
+        const url = request.nextUrl.clone()
+        url.pathname = "/onboarding"
+        return NextResponse.redirect(url)
+      }
+
+      // オンボーディング済みで /onboarding にアクセス → /dashboard へ
+      if (isOnboarded && isOnboardingPage) {
+        const url = request.nextUrl.clone()
+        url.pathname = "/dashboard"
+        return NextResponse.redirect(url)
+      }
     }
   }
 
